@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="ソース ファイル">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="ヘッダー ファイル">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="リソース ファイル">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="ソース ファイル\Algorithm">
+      <UniqueIdentifier>{921c63ff-0225-47aa-884d-a14d3be9e9ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Algorithm">
+      <UniqueIdentifier>{95a25534-efdb-4cfd-aee3-65d9d39fb245}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Util">
+      <UniqueIdentifier>{b80aa492-91c0-46f8-8e0b-79f7482a60be}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="cudatest.cu">
+      <Filter>ソース ファイル</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="ART.cpp">
+      <Filter>ソース ファイル\Algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="FBP.cpp">
+      <Filter>ソース ファイル\Algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="ReconstructionAlgorithm.cpp">
+      <Filter>ソース ファイル\Algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="sinogram.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ART.h">
+      <Filter>ヘッダー ファイル\Algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="util.h">
+      <Filter>ソース ファイル\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="consts.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Eigen\Cholesky" />
+    <None Include="Eigen\CholmodSupport" />
+    <None Include="Eigen\Core" />
+    <None Include="Eigen\Dense" />
+    <None Include="Eigen\Eigen" />
+    <None Include="Eigen\Eigenvalues" />
+    <None Include="Eigen\Geometry" />
+    <None Include="Eigen\Householder" />
+    <None Include="Eigen\IterativeLinearSolvers" />
+    <None Include="Eigen\Jacobi" />
+    <None Include="Eigen\KLUSupport" />
+    <None Include="Eigen\LU" />
+    <None Include="Eigen\MetisSupport" />
+    <None Include="Eigen\OrderingMethods" />
+    <None Include="Eigen\PardisoSupport" />
+    <None Include="Eigen\PaStiXSupport" />
+    <None Include="Eigen\QR" />
+    <None Include="Eigen\QtAlignedMalloc" />
+    <None Include="Eigen\Sparse" />
+    <None Include="Eigen\SparseCholesky" />
+    <None Include="Eigen\SparseCore" />
+    <None Include="Eigen\SparseLU" />
+    <None Include="Eigen\SparseQR" />
+    <None Include="Eigen\SPQRSupport" />
+    <None Include="Eigen\StdDeque" />
+    <None Include="Eigen\StdList" />
+    <None Include="Eigen\StdVector" />
+    <None Include="Eigen\SuperLUSupport" />
+    <None Include="Eigen\SVD" />
+    <None Include="Eigen\UmfPackSupport" />
+  </ItemGroup>
+</Project>
