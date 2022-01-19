@@ -25,7 +25,7 @@ VectorXf* ART::reconstruction() {
 	int origx, origy, relx, rely, tmpx;
 	int center;
 	float theta;
-	float offsetD, offsetY;
+	double offsetD, offsetY;
 	Trip* material = NULL;
 
 
@@ -56,13 +56,13 @@ VectorXf* ART::reconstruction() {
 					rely = n_detector - origy - 1 - center + 0.5;
 				}
 				for (w = 0; w < n_detector; w++) {
-					offsetD = (n_detector - w - 1 - center + 0.5) / cos(theta); //offset of the detector
+					offsetD = ((double)n_detector - w - 1 - center + 0.5) / cos(theta); //offset of the detector
 					offsetY = offsetD - rely + relx * tan(theta);
-					if (offsetY <= 0.5 * (1 - tan(theta)) and offsetY >= -0.5 * (1 - tan(theta))) {
+					if (offsetY <= abs(0.5 * (1 - (double)tan(theta))) and offsetY >= -abs(0.5 * (1 - (double)tan(theta)))) {
 						material = new Trip(static_cast<float>(n_detector * v + w), static_cast<float>(n_detector * y + x), 1);
 						materials.push_back(*material);
 					}
-					else if (offsetY <= 0.5 * (1 + tan(theta)) and offsetY >= 0.5 * (1 - tan(theta))) {
+					else if (offsetY <= 0.5 * (1 + (double)tan(theta)) and offsetY >= 0.5 * (1 - (double)tan(theta))) {
 						material = new Trip(static_cast<float>(n_detector * v + w), static_cast<float>(n_detector * y + x), 1);
 						materials.push_back(*material);
 					}
@@ -88,7 +88,7 @@ VectorXf* ART::reconstruction() {
 	for (int i = 0; i < n_detector * n_view; i++) {
 		*(_tmp) = sysmat.row(i);
 		sys_sys[i] = VectorXf(*(_tmp)).dot(VectorXf(*(_tmp)));
-		cout << "\nsyssys" << sys_sys[i];
+		//cout << "\nsyssys" << sys_sys[i];
 	}
 
 	itrcount = 0;
