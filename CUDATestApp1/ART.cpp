@@ -58,7 +58,7 @@ VectorXf* ART::reconstruction() {
 				for (w = 0; w < n_detector; w++) {
 					offsetD = (n_detector - w - 1 - center + 0.5) / cos(theta); //offset of the detector
 					offsetY = offsetD - rely + relx * tan(theta);
-					if (offsetY <= 0.5 * (1 - tan(theta)) and offsetY >= -0.5 * (1 - tan(theta))) {
+					if (offsetY <= abs(0.5 * (1 - tan(theta))) and offsetY >= - 1 * abs(0.5 * (1 - tan(theta)))) {
 						material = new Trip(static_cast<float>(n_detector * v + w), static_cast<float>(n_detector * y + x), 1);
 						materials.push_back(*material);
 					}
@@ -80,20 +80,23 @@ VectorXf* ART::reconstruction() {
 	float diff;
 	int itrcount;
 	float sys_atn;// , sys_sys;
-	float* sys_sys = (float*)malloc(sizeof(float) * n_detector * n_view);
+	//float* sys_sys = (float*)malloc(sizeof(float) * n_detector * n_view);
+	vector<float> sys_sys = vector<float>(n_detector * n_view);
 	VectorXf _sino = (*sino).get_sinovec();
 	//VectorXf* _tmp = static_cast<VectorXf*>(malloc(sizeof(VectorXf) * n_detector * n_detector));
 	VectorXf* _tmp = new VectorXf(n_detector * n_detector);
 
 	for (int i = 0; i < n_detector * n_view; i++) {
 		*(_tmp) = sysmat.row(i);
-		sys_sys[i] = VectorXf(*(_tmp)).dot(VectorXf(*(_tmp)));
+		//sys_sys[i] = VectorXf(*(_tmp)).dot(VectorXf(*(_tmp)));
+		sys_sys.push_back(VectorXf(*(_tmp)).dot(VectorXf(*(_tmp))));
 		cout << "\nsyssys" << sys_sys[i];
 	}
 
 	itrcount = 0;
 	while (itrcount < 50) { //getchar() != '\n') {
 		attenutmp = attenu;
+		cout << "\rIteration:" << attenu[0] << "," << attenu[1] << "," << attenu[2];
 		for (int i = 0; i < n_detector * n_view; i++) {
 			//*(_tmp) = (VectorXf::Zero(n_detector * n_detector));
 			*(_tmp) = sysmat.row(i);
