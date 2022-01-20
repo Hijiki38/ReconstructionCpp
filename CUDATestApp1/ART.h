@@ -23,7 +23,8 @@ private:
 
 	SpMat sysmat;
 	vector<Trip> materials;
-	VectorXf attenu, attenutmp; // , proj;
+	VectorXf attenu, attenutmp;// , uncho; // , proj;
+	//MatrixXf unchoccho;
 	float relpar = 1.05;
 
 
@@ -53,6 +54,8 @@ public:
 		materials = *(new vector<Trip>(MAXMATERIALS));
 		//attenu = *(new VectorXf(n_detector * n_detector));
 		attenu = VectorXf::Zero(n_detector * n_detector);
+		//uncho = VectorXf::Zero(n_detector * n_detector * n_detector * n_view);
+		//unchoccho = MatrixXf::Zero(n_view * n_detector, n_detector * n_detector);
 	}
 
 	VectorXf* reconstruction();

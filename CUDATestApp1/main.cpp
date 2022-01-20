@@ -27,8 +27,8 @@ int main(int argc, char *argv[]) {
 	cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|R|E|C|O|N|S|T|R|U|C|T|O|R|\n+-+-+-+-+-+-+-+-+-+-+-+-+-+";
 	if (argc == 1) {
 		//inpath = ".";
-		//inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star360.csv";
-		inpath = "E:\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star360.csv";
+		inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star360.csv";
+		//inpath = "E:\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star.csv";
 	}
 	else {
 		inpath = argv[1];
@@ -63,11 +63,13 @@ int main(int argc, char *argv[]) {
 
 	cout << "received vector:" << (*result)[0] << "," << (*result)[1] << "," << (*result)[2];
 
-	//ofstream ofs("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\vsARToutput.csv");
-	ofstream ofs("E:\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\vsARToutput.csv");
+	ofstream ofs("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\vsARToutput.csv");
+	//ofstream ofs("E:\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\vsARToutput.csv");
 	int ressize = (*result).size();
 	int nd = (*sg).get_nd();
+	int nv = (*sg).get_nv();
 	cout << "outvec_len:" << outvec.size();
+
 	for (int i = 0; i < ressize / nd; i++) {
 		cout << "\r writing..  " << i << " / " << ressize;
 		for (int j = 0; j < nd; j++) {
