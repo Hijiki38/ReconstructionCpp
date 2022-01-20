@@ -19,14 +19,12 @@ using namespace Eigen;
 
 VectorXf* ART::reconstruction() {
 
-
-
 	int x, y, v, w;
-	int origx, origy, tmpx;
-	float relx, rely;
+	int origx, origy, tmpx; // relx, rely, tmpx;
 	int center;
+	float relx, rely;
 	float theta;
-	double offsetD, offsetY;
+	float offsetD, offsetY;
 	Trip* material = NULL;
 
 
@@ -47,10 +45,7 @@ VectorXf* ART::reconstruction() {
 			origy = y;
 			relx = origx - center + 0.5;
 			rely = n_detector - origy - 1 - center + 0.5;
-			//cout << "\nnd: " << n_detector << ", origy: " << origy << "rely :" << rely << ", cent: " << center;
 			for (v = 0; v < n_view; v++) {
-				//cout << "\n" << theta;
-
 				if (theta >= PI / 4) { //“Š‰eŠp‚ª45“x‚ð’´‚¦‚½‚ç‰æ‘œ‚ð90“x‰E‰ñ“]‚³‚¹“Š‰eŠp‚ð - 45“x‚É
 					theta -= PI / 2;
 					tmpx = origx;
@@ -60,34 +55,17 @@ VectorXf* ART::reconstruction() {
 					rely = n_detector - origy - 1 - center + 0.5;
 				}
 				for (w = 0; w < n_detector; w++) {
-					offsetD = ((double)n_detector - (double)w - 1 - (double)center + 0.5) / cos(theta); //offset of the detector
-					offsetY = offsetD - (double)rely + (double)relx * (double)tan(theta);
-					//if ((w == 3 || w == 4) && theta == 0) {
-					//	cout << "\ntheta: " << theta << ", detector: " << w << "rely :" << rely << ", offset Y: " << offsetY << ", offsetD: " << offsetD << ",y:" << y;
-					//}
-					if (theta >= 0) {
-						if (offsetY <= 0.5 * (1 - (double)tan(theta)) && offsetY > -0.5 * (1 - (double)tan(theta))) {
-							material = new Trip(static_cast<float>(n_detector * v + w), static_cast<float>(n_detector * y + x), 1); // abs(1 / cos(theta)));
-							materials.push_back(*material);
-							delete material;
-						}
-						else if (offsetY <= 0.5 * (1 + (double)tan(theta)) && offsetY > 0.5 * (1 - (double)tan(theta))) {
-							material = new Trip(static_cast<float>(n_detector * v + w), static_cast<float>(n_detector * y + x), 1);// abs((1 - offsetY) / sin(theta)));
-							materials.push_back(*material);
-							delete material;
-						}
+					offsetD = (n_detector - w - 1 - center + 0.5) / cos(theta); //offset of the detector
+					offsetY = offsetD - rely + relx * tan(theta);
+
+
+					if (offsetY <= 0.5 * (1 - tan(theta)) and offsetY >= -0.5 * (1 - tan(theta))) {
+						material = new Trip(static_cast<float>(n_detector * v + w), static_cast<float>(n_detector * y + x), 1);
+						materials.push_back(*material);
 					}
-					else {
-						if (offsetY <= -0.5 * (1 - (double)tan(theta)) && offsetY > 0.5 * (1 - (double)tan(theta))) {
-							material = new Trip(static_cast<float>(n_detector * v + w), static_cast<float>(n_detector * y + x), 0.5); // abs(1 / cos(theta)));
-							materials.push_back(*material);
-							delete material;
-						}
-						else if (offsetY <= 0.5 * (1 - (double)tan(theta)) && offsetY > 0.5 * (1 + (double)tan(theta))) {
-							material = new Trip(static_cast<float>(n_detector * v + w), static_cast<float>(n_detector * y + x), 0.5);// abs((1 - offsetY) / sin(theta)));
-							materials.push_back(*material);
-							delete material;
-						}
+					else if (offsetY <= 0.5 * (1 + tan(theta)) and offsetY >= 0.5 * (1 - tan(theta))) {
+						material = new Trip(static_cast<float>(n_detector * v + w), static_cast<float>(n_detector * y + x), 1);
+						materials.push_back(*material);
 					}
 
 				}
@@ -104,7 +82,6 @@ VectorXf* ART::reconstruction() {
 	int itrcount;
 	float sys_atn;// , sys_sys;
 	float* sys_sys = (float*)malloc(sizeof(float) * n_detector * n_view);
-	//vector<float> sys_sys(n_detector * n_view);
 	VectorXf _sino = (*sino).get_sinovec();
 	//VectorXf* _tmp = static_cast<VectorXf*>(malloc(sizeof(VectorXf) * n_detector * n_detector));
 	VectorXf* _tmp = new VectorXf(n_detector * n_detector);
@@ -112,17 +89,12 @@ VectorXf* ART::reconstruction() {
 	for (int i = 0; i < n_detector * n_view; i++) {
 		*(_tmp) = sysmat.row(i);
 		sys_sys[i] = VectorXf(*(_tmp)).dot(VectorXf(*(_tmp)));
-		if (sys_sys[i] == 0) {
-			sys_sys[i] = 1;
-		}
-		//sys_sys.push_back(VectorXf(*(_tmp)).dot(VectorXf(*(_tmp))));
-		//cout << "\nsyssys" << sys_sys[i];
+		cout << "\nsyssys" << sys_sys[i];
 	}
 
 	itrcount = 0;
-	while (itrcount < 50) { //getchar() != '\n') {
+	while (itrcount < 5) { //getchar() != '\n') {
 		attenutmp = attenu;
-		cout << "\rIteration:" << attenu[0] << "," << attenu[1] << "," << attenu[2];
 		for (int i = 0; i < n_detector * n_view; i++) {
 			//*(_tmp) = (VectorXf::Zero(n_detector * n_detector));
 			*(_tmp) = sysmat.row(i);
@@ -140,22 +112,6 @@ VectorXf* ART::reconstruction() {
 
 	cout << "\n end iteration!";
 
-	//VectorXf uncho(n_detector * n_view * n_detector * n_detector);
-
-	//unchoccho = MatrixXf(sysmat);
-	//uncho = unchoccho.transpose();
-	//uncho.resize(uncho.cols() * uncho.rows(), 1);
-
-	//ofstream ofs("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\vsARToutput2.csv");
-
-	//for (int hoge = 0; hoge < n_detector * n_view; hoge++) {
-	//	for (int fuga = 0; fuga < n_detector * n_detector; fuga++) {
-	//		ofs << unchoccho(hoge, fuga) << ",";
-	//	}
-	//	ofs << "\n";
-	//}
-
-
 	return &attenu;
 }
 
@@ -171,7 +127,7 @@ private:
 	VectorXf attenu, attenutmp, proj;
 	float relpar;
 
-	
+
 public:
 	ART(float* sino, float nd, float nv) {
 		sinogram = *sino;
