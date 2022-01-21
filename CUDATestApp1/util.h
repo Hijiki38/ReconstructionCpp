@@ -7,7 +7,7 @@
 #include <sstream>
 #include "sinogram.h"
 
-using namespace std;
+using std::cout;
 
 sinogram* read_sinogram(string inpath);
 vector<string> split(string& input, char delimiter);

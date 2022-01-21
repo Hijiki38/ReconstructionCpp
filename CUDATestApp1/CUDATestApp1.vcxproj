@@ -152,6 +152,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ReconstructionAlgorithm.cpp" />
     <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="TV.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Eigen\Cholesky" />
@@ -189,7 +190,6 @@
     <ClInclude Include="ART.h" />
     <ClInclude Include="consts.h" />
     <ClInclude Include="sinogram.h" />
-    <ClInclude Include="stdafx.h" />
     <ClInclude Include="util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
