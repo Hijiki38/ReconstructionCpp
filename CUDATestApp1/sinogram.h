@@ -38,13 +38,11 @@ namespace Reconstruction {
 			n_v = 1;
 		}
 
-		VectorXf get_sinovec() { return eigen_sinovec; }
-		int get_nd() { return n_d; }
-		int get_nv() { return n_v; }
+		VectorXf get_sinovec();
+		int get_nd();
+		int get_nv();
 
-		static sinogram read_sino(string inpath) {
-
-		}
+		static sinogram read_sinogram(string inpath);
 
 	};
 }

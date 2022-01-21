@@ -20,8 +20,8 @@ int main(int argc, char *argv[]) {
 	int mode;
 	int count=0;
 	string inpath;
-	sinogram* sg;
-	ART* art;
+	Reconstruction::sinogram* sg;
+	Reconstruction::ART* art;
 	VectorXf* result;
 
 	cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|R|E|C|O|N|S|T|R|U|C|T|O|R|\n+-+-+-+-+-+-+-+-+-+-+-+-+-+";
@@ -38,16 +38,16 @@ int main(int argc, char *argv[]) {
 	while (1) {
 		cin >> mode;
 		if (mode == static_cast<int>(rec_name::FBP)) {
-			sg = read_sinogram(inpath);
-			art = new ART(sg);
+			sg = Reconstruction::sinogram.read_sinogram(inpath);
+			art = new Reconstruction::ART(sg);
 			cout << "activate FBP";
 			result = (*art).reconstruction();
 			break;
 		}
 		else if (mode == static_cast<int>(rec_name::ART)) {
-			sg = read_sinogram(inpath);
+			sg = Reconstruction::sinogram.read_sinogram(inpath);
 			cout << "\nread sinogram completed. d, v =" << (*sg).get_nd() << ", " << (*sg).get_nv();
-			art = new ART(sg);
+			art = new Reconstruction::ART(sg);
 			cout << "\nactivate ART";
 			result = (*art).reconstruction();
 			break;

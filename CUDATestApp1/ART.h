@@ -29,10 +29,11 @@ extern const double PI;
 		vector<Trip> materials;
 		VectorXf attenu, imgdiff;
 		float relpar = 1.05;
+		float relpard = 0.01;
 
 
 	public:
-		ART(sinogram* s) {
+		ART(Reconstruction::sinogram* s) {
 
 			sino = s;
 			n_detector = (*s).get_nd();

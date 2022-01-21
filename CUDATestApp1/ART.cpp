@@ -69,6 +69,7 @@ namespace Reconstruction {
 		VectorXf* _tmp = new VectorXf(n_detector * n_detector);
 
 		float tv = 0;
+		float tvd = 0;
 
 		for (int i = 0; i < n_detector * n_view; i++) {
 			*(_tmp) = sysmat.row(i);
@@ -92,39 +93,38 @@ namespace Reconstruction {
 
 			//Iteration(TV)
 
-			for (int i = 1; i < n_detector - 1; i++) {
-				for (int j = 1; j < n_detector - 1; j++) {
-					float xyn = attenu(i - 1, j);
-					float xpyn = attenu(i - 1, j + 1);
-					float xny = attenu(i, j - 1);
-					float xy = attenu(i, j);
-					float xpy = attenu(i, j + 1);
-					float xnyp = attenu(i + 1, j - 1);
-					float xyp = attenu(i + 1, j);
+			for (int i = 0; i < 3; i++) {
 
-					double v = sqrt(0.0001 + (xy - xny) * (xy - xny) + (xy - xyn) * (xy - xyn));
-					double v1 = (2 * xy - xny - xyn) / v;
-					double v2 = (xpy - xy) / sqrt(0.0001 + (xpy - xy) * (xpy - xy) + (xpy - xpyn) * (xpy - xpyn));
-					double v3 = (xyp - xy) / sqrt(0.0001 + (xyp - xy) * (xyp - xy) + (xyp - xnyp) * (xyp - xnyp));
-					imgdiff(i * n_detector + j) = v1 - v2 - v3;
-					tv += v;
+				cout << "\rIteration:" << itrcount << ", TVitration:" << i;
+
+				*(_tmp) = attenu;
+				tv = Reconstruction::TV.calc_tv(attenu, imgdiff, 0.0001); //VectorXf* img, VectorXf* imgdiff, float param
+
+				attenu = attenu - imgdiff;
+				tvd = Reconstruction::TV.calc_tv(attenu, imgdiff, 0.0001);
+
+				if (tv < tvd) {
+					attenu = *(_tmp);
 				}
+
+				tv = tvd;
 			}
 
 
-			for (int i = 0; 1 < 5; 1++) {
-				Buffer.BlockCopy(img, 0, temp, 0, width * height);
-				for (int y = 0; y < height; ++y) {
-					for (int x = 0; x < width; ++x) img[x, y] -= D * diff[x, y];
-				}
-				double cvd = CalcTv(img, diff, E);
-				if (vd < cvd) {
-					Buffer.BlockCopy(temp, 0, img, 0, width * height);
-					break;
-				}
-				vd = cvd;
-			}
-			return vd;
+
+			//for (int i = 0; 1 < 5; 1++) {
+			//	Buffer.BlockCopy(img, 0, temp, 0, width * height);
+			//	for (int y = 0; y < height; ++y) {
+			//		for (int x = 0; x < width; ++x) img[x, y] -= D * diff[x, y];
+			//	}
+			//	double cvd = CalcTv(img, diff, E);
+			//	if (vd < cvd) {
+			//		Buffer.BlockCopy(temp, 0, img, 0, width * height);
+			//		break;
+			//	}
+			//	vd = cvd;
+			//}
+			/*return vd;*/
 
 			itrcount++;
 		}
