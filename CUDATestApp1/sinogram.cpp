@@ -1,17 +1,16 @@
-#include<sinogram.h>
+#include"sinogram.h"
+#include"methods.h"
 
-using std::cout;
-using namespace Eigen;
 
 namespace Reconstruction {
 
-	VectorXf Sinogram::get_sinovec() { return eigen_sinovec; }
+	VectorXf sinogram::get_sinovec() { return eigen_sinovec; }
 	
-	int Sinogram::get_nd() { return n_d; }
+	int sinogram::get_nd() { return n_d; }
 	
-	int Sinogram::get_nv() { return n_v; }
+	int sinogram::get_nv() { return n_v; }
 
-	static sinogram* Sinogram::read_sinogram(string inpath) {
+	sinogram* sinogram::read_sinogram(string inpath) {
 		ifstream stream(inpath);
 		string line;
 		vector<float> sinovec;
@@ -22,7 +21,7 @@ namespace Reconstruction {
 
 		while (getline(stream, line)) {
 			cout << "readrow:" << count_row << "\n";
-			vector<string> strs = split(line, ',');
+			vector<string> strs = Reconstruction::splitstring(line, ',');
 			for (int i = 0; i < strs.size(); i++) {
 				sinovec.push_back(stof(strs.at(i)));
 				count_all++;

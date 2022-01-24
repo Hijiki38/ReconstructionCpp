@@ -5,8 +5,7 @@
 #include <sstream>
 #include "ART.h"
 #include "sinogram.h"
-#include "util.h"
-using namespace std;
+#include "methods.h"
 
 const double PI = 3.14159265358979;
 
@@ -22,96 +21,77 @@ int main(int argc, char *argv[]) {
 	string inpath;
 	Reconstruction::sinogram* sg;
 	Reconstruction::ART* art;
-	VectorXf* result;
+	VectorXf* result = nullptr;
 
-	cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|R|E|C|O|N|S|T|R|U|C|T|O|R|\n+-+-+-+-+-+-+-+-+-+-+-+-+-+";
+	vector<float> outvec;
+	int ressize;
+	int nd;
+	int nv;
+	ofstream ofs("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\vsARToutput.csv");
+
+
+	std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|R|E|C|O|N|S|T|R|U|C|T|O|R|\n+-+-+-+-+-+-+-+-+-+-+-+-+-+";
 	if (argc == 1) {
 		//inpath = ".";
-		inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star360.csv";
+		inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star.csv";
 		//inpath = "E:\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star.csv";
 	}
 	else {
 		inpath = argv[1];
 	}
 
-	cout << "\nInput reconstruction mode: (0:FBP, 1:ART)";
+	std::cout << "\nInput reconstruction mode: (0:FBP, 1:ART)";
 	while (1) {
-		cin >> mode;
+		std::cin >> mode;
+		sg = (*sg).read_sinogram(inpath);
+		std::cout << "\nread sinogram completed. d, v =" << (*sg).get_nd() << ", " << (*sg).get_nv();
+		
 		if (mode == static_cast<int>(rec_name::FBP)) {
-			sg = Reconstruction::sinogram.read_sinogram(inpath);
-			art = new Reconstruction::ART(sg);
-			cout << "activate FBP";
-			result = (*art).reconstruction();
 			break;
 		}
 		else if (mode == static_cast<int>(rec_name::ART)) {
-			sg = Reconstruction::sinogram.read_sinogram(inpath);
-			cout << "\nread sinogram completed. d, v =" << (*sg).get_nd() << ", " << (*sg).get_nv();
-			art = new Reconstruction::ART(sg);
-			cout << "\nactivate ART";
-			result = (*art).reconstruction();
 			break;
 		}
 		else {
-			cout << "Undefined value.";
+			std::cout << "Undefined value.";
 		}
 	}
 
-	vector<float> outvec;
+	if (mode == static_cast<int>(rec_name::FBP)) {
+		//art = new Reconstruction::ART(sg);
+		//cout << "activate FBP";
+		//result = (*art).reconstruction();
+	}
+	else if (mode == static_cast<int>(rec_name::ART)) {
+		art = new Reconstruction::ART(sg, 205.7, 1100.0, -0.9345, 0.01869);
+		std::cout << "\nactivate ART";
+		result = (*art).reconstruction(3,5);
+	}
+
+
 	outvec.resize((*result).size());
 	VectorXf::Map(&outvec[0], (*result).size()) = (*result);
 
-	cout << "received vector:" << (*result)[0] << "," << (*result)[1] << "," << (*result)[2];
+	std::cout << "received vector:" << (*result)[0] << "," << (*result)[1] << "," << (*result)[2];
 
-	ofstream ofs("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\vsARToutput.csv");
+	
 	//ofstream ofs("E:\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\vsARToutput.csv");
-	int ressize = (*result).size();
-	int nd = (*sg).get_nd();
-	int nv = (*sg).get_nv();
-	cout << "outvec_len:" << outvec.size();
+	ressize = (*result).size();
+	nd = (*sg).get_nd();
+	nv = (*sg).get_nv();
+
+	//std::cout << "outvec_len:" << outvec.size();
 
 	for (int i = 0; i < ressize / nd; i++) {
-		cout << "\r writing..  " << i << " / " << ressize;
+		std::cout << "\r writing..  " << i << " / " << (ressize / nd) - 1;
 		for (int j = 0; j < nd; j++) {
-			cout << count << "\n";
+			//std::cout << count << "\n";
 			ofs << outvec[count] << ',';
 			count++;
 		}
 		ofs << '\n';
 	}
 }
-
-/*sinogram* read_sinogram(string inpath) {
-	ifstream stream(inpath);
-	string line;
-	vector<float> sinovec;
-	int count_row = 0;
-	int count_all = 0;
-
-	while (getline(stream, line)) {
-		vector<string> strs = split(line, ',');
-		for (int i = 0; i < strs.size(); i++) {
-			sinovec.push_back(stof(strs.at(i)));
-			count_all++;
-		}
-		count_row++;
-	}
-
-	sinogram sino(sinovec, count_all / count_row, count_row);
-	return &sino;
-}
-
-vector<string> split(string& input, char delimiter) {
-	istringstream stream(input);
-	string field;
-	vector<string> output;
-
-	while (getline(stream, field, delimiter)) {
-		output.push_back(field);
-	}
-
-	return output;
-}*/
 
 
 

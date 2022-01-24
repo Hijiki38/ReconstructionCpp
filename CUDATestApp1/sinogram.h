@@ -42,7 +42,8 @@ namespace Reconstruction {
 		int get_nd();
 		int get_nv();
 
-		static sinogram read_sinogram(string inpath);
+
+		static sinogram* read_sinogram(string inpath);
 
 	};
 }

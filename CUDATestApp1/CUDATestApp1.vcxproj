@@ -150,9 +150,11 @@
     <ClCompile Include="ART.cpp" />
     <ClCompile Include="FBP.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="point.cpp" />
     <ClCompile Include="ReconstructionAlgorithm.cpp" />
-    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="sinogram.cpp" />
     <ClCompile Include="TV.cpp" />
+    <ClCompile Include="methods.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Eigen\Cholesky" />
@@ -189,8 +191,10 @@
   <ItemGroup>
     <ClInclude Include="ART.h" />
     <ClInclude Include="consts.h" />
+    <ClInclude Include="point.h" />
     <ClInclude Include="sinogram.h" />
-    <ClInclude Include="util.h" />
+    <ClInclude Include="TV.h" />
+    <ClInclude Include="methods.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

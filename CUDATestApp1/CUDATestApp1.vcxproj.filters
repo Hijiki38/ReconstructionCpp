@@ -22,6 +22,9 @@
     <Filter Include="ソース ファイル\Util">
       <UniqueIdentifier>{b80aa492-91c0-46f8-8e0b-79f7482a60be}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\Util">
+      <UniqueIdentifier>{7b114815-4a28-47b7-9f01-66af6a7be55a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="cudatest.cu">
@@ -41,11 +44,17 @@
     <ClCompile Include="ReconstructionAlgorithm.cpp">
       <Filter>ソース ファイル\Algorithm</Filter>
     </ClCompile>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="TV.cpp">
       <Filter>ソース ファイル\Algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="sinogram.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="methods.cpp">
+      <Filter>ソース ファイル\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="point.cpp">
+      <Filter>ソース ファイル\Util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -55,11 +64,17 @@
     <ClInclude Include="ART.h">
       <Filter>ヘッダー ファイル\Algorithm</Filter>
     </ClInclude>
-    <ClInclude Include="util.h">
-      <Filter>ソース ファイル\Util</Filter>
-    </ClInclude>
     <ClInclude Include="consts.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="TV.h">
+      <Filter>ヘッダー ファイル\Algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="methods.h">
+      <Filter>ヘッダー ファイル\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="point.h">
+      <Filter>ヘッダー ファイル\Util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
