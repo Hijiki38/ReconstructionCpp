@@ -33,7 +33,8 @@ int main(int argc, char *argv[]) {
 	std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|R|E|C|O|N|S|T|R|U|C|T|O|R|\n+-+-+-+-+-+-+-+-+-+-+-+-+-+";
 	if (argc == 1) {
 		//inpath = ".";
-		inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star.csv";
+		//inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star.csv";
+		inpath = "D:\\tmp\\10-30_f32_2.csv";
 		//inpath = "E:\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star.csv";
 	}
 	else {

@@ -77,7 +77,7 @@ namespace Reconstruction {
 		for (int i = 0; i < n_detector * n_view; i++) {
 			*(_tmp) = sysmat.row(i);
 			sys_sys[i] = VectorXf(*(_tmp)).dot(VectorXf(*(_tmp)));
-			cout << "\nsyssys" << sys_sys[i];
+			cout << "\rGenerating (sys * sys) :" << i << " / " << n_detector * n_view << "\n";
 		}
 
 		itrcount = 0;

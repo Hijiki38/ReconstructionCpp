@@ -12,20 +12,12 @@ namespace Reconstruction {
 
 	sinogram* sinogram::read_sinogram(string inpath) {
 		ifstream stream(inpath);
-		FILE* fp = fopen(inpath.c_str(), "r");
-
-		vector<char> buffer(1024 * 1024);
-
 		string line;
 		vector<float> sinovec;
 		int count_row = 0;
 		int count_all = 0;
 
 		cout << "read sinogram";
-
-		while (!feof(fp)) {
-			size_t size = fread(&buffer[0], 1, buffer.size(), fp);
-		}
 
 		while (getline(stream, line)) {
 			cout << "\rreadrow:" << count_row;
