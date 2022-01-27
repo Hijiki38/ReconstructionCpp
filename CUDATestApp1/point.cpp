@@ -12,18 +12,10 @@ namespace Reconstruction {
 	void point::set_xy(float _x, float _y) { x = _x; y = _y; }
 	void point::set_center(float _center) { center = _center; }
 
-	void point::rotate90(bool is_clockwise) {
+	void point::rotate90() {
 		float tmp_x = x;
-		
 		x = get_inverted(y);
 		y = tmp_x;
-
-
-		//tmpx = origx;
-		//origx = n_detector - origy - 1;
-		//origy = tmpx;
-		//relx = origx - center + 0.5;
-		//rely = n_detector - origy - 1 - center + 0.5;
 	}
 
 }

@@ -6,6 +6,7 @@
 #include "ART.h"
 #include "sinogram.h"
 #include "methods.h"
+#include "geometry.h"
 
 const double PI = 3.14159265358979;
 
@@ -19,6 +20,7 @@ int main(int argc, char *argv[]) {
 	int mode;
 	int count=0;
 	string inpath;
+	Reconstruction::geometry geo = {false, 205.7, 1100.0, -0.9345, 0.01869};
 	Reconstruction::sinogram* sg;
 	Reconstruction::ART* art;
 	VectorXf* result = nullptr;
@@ -31,42 +33,56 @@ int main(int argc, char *argv[]) {
 
 
 	std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|R|E|C|O|N|S|T|R|U|C|T|O|R|\n+-+-+-+-+-+-+-+-+-+-+-+-+-+";
-	if (argc == 1) {
+	if (argc == 1) 
+	{
 		//inpath = ".";
-		//inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star.csv";
-		inpath = "D:\\tmp\\10-30_f32_2.csv";
+		//inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sinogram_total_f32.csv";
+		inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star360.csv";
+		//inpath = "D:\\tmp\\10-30_f32_2.csv";
 		//inpath = "E:\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star.csv";
 	}
-	else {
+	else 
+	{
 		inpath = argv[1];
 	}
 
+	sg = Reconstruction::sinogram::read_sinogram(inpath);
+	if (sg == nullptr) 
+	{
+		"Can not read sinogram file!";
+		return 1;
+	}
+
+	std::cout << "\nread sinogram completed. d, v =" << (*sg).get_nd() << ", " << (*sg).get_nv();
 	std::cout << "\nInput reconstruction mode: (0:FBP, 1:ART)";
-	while (1) {
+	while (1) 
+	{
 		std::cin >> mode;
-		sg = (*sg).read_sinogram(inpath);
-		std::cout << "\nread sinogram completed. d, v =" << (*sg).get_nd() << ", " << (*sg).get_nv();
-		
-		if (mode == static_cast<int>(rec_name::FBP)) {
+		if (mode == static_cast<int>(rec_name::FBP)) 
+		{
 			break;
 		}
-		else if (mode == static_cast<int>(rec_name::ART)) {
+		else if (mode == static_cast<int>(rec_name::ART)) 
+		{
 			break;
 		}
-		else {
+		else 
+		{
 			std::cout << "Undefined value.";
 		}
 	}
 
-	if (mode == static_cast<int>(rec_name::FBP)) {
+	if (mode == static_cast<int>(rec_name::FBP)) 
+	{
 		//art = new Reconstruction::ART(sg);
 		//cout << "activate FBP";
 		//result = (*art).reconstruction();
 	}
-	else if (mode == static_cast<int>(rec_name::ART)) {
-		art = new Reconstruction::ART(sg, 205.7, 1100.0, -0.9345, 0.01869);
+	else if (mode == static_cast<int>(rec_name::ART)) 
+	{
+		art = new Reconstruction::ART(sg, &geo);
 		std::cout << "\nactivate ART";
-		result = (*art).reconstruction(3,5);
+		result = (*art).reconstruction(30,5);
 	}
 
 
@@ -83,9 +99,11 @@ int main(int argc, char *argv[]) {
 
 	//std::cout << "outvec_len:" << outvec.size();
 
-	for (int i = 0; i < ressize / nd; i++) {
+	for (int i = 0; i < ressize / nd; i++) 
+	{
 		std::cout << "\r writing..  " << i << " / " << (ressize / nd) - 1;
-		for (int j = 0; j < nd; j++) {
+		for (int j = 0; j < nd; j++) 
+		{
 			//std::cout << count << "\n";
 			ofs << outvec[count] << ',';
 			count++;

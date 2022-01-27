@@ -141,12 +141,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="cudatest.cu">
-      <FileType>Document</FileType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </CudaCompile>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="ART.cpp" />
     <ClCompile Include="FBP.cpp" />
     <ClCompile Include="main.cpp" />
@@ -191,6 +185,7 @@
   <ItemGroup>
     <ClInclude Include="ART.h" />
     <ClInclude Include="consts.h" />
+    <ClInclude Include="geometry.h" />
     <ClInclude Include="point.h" />
     <ClInclude Include="sinogram.h" />
     <ClInclude Include="TV.h" />

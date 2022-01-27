@@ -19,14 +19,14 @@ namespace Reconstruction {
 
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		sinogram(VectorXf svec, int d, int v) {
-			eigen_sinovec = svec;
+		sinogram(VectorXf* svec, int d, int v) {
+			eigen_sinovec = *svec;
 			n_d = d;
 			n_v = v;
 		}
 
-		sinogram(vector<float> svec, int d, int v) {
-			VectorXf tmp = Map<VectorXf, Unaligned>(svec.data(), svec.size());
+		sinogram(vector<float>* svec, int d, int v) {
+			VectorXf tmp = Map<VectorXf, Unaligned>(svec->data(), svec->size());
 			eigen_sinovec = tmp; // Map<VectorXf, Unaligned>(svec.data(), svec.size());
 			n_d = d;
 			n_v = v;
