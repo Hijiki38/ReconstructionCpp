@@ -10,15 +10,18 @@ namespace Reconstruction {
 
 		float prevsum, diff;
 		int itrcount;
-		float sys_atn;// , sys_sys;
+		float sys_atn, sys_sys;
 		float* syssys = (float*)malloc(sizeof(float) * n_detector * n_view);
 		float* sysrow_dev;
 		float* syssys_dev;
 		VectorXf _sino = (*sino).get_sinovec();
+		MatrixXf* _sysmatblock = new MatrixXf(block_num, n_detector * n_detector);
 		VectorXf* _tmp = new VectorXf(n_detector * n_detector);
 
 		TV* tv = new TV();
 		TV* tvd = new TV();
+
+		bool debug = true;
 
 		generate_sysmat(geometry_normalized->is_conebeam);
 
@@ -47,40 +50,65 @@ namespace Reconstruction {
 
 
 		cout << "\n";
-		for (int i = 0; i < n_detector * n_view; i++) 
-		{
-			*(_tmp) = sysmat.row(i);
-			syssys[i] = VectorXf(*(_tmp)).dot(VectorXf(*(_tmp)));
-			//cout << "\rGenerating (sys * sys) :" << i << " / " << n_detector * n_view;
-		}
+		//for (int i = 0; i < n_detector * n_view; i++) 
+		//{
+		//	*(_tmp) = sysmat.row(i);
+		//	syssys[i] = VectorXf(*(_tmp)).dot(VectorXf(*(_tmp)));
+		//	//cout << "\rGenerating (sys * sys) :" << i << " / " << n_detector * n_view;
+		//}
 
 		itrcount = 0;
 		while (itrcount < itr) 
 		{ 
 			prevsum = attenu.sum();
-			for (int i = 0; i < n_detector * n_view; i++) 
-			{
-				*(_tmp) = sysmat.row(i);
-				sys_atn = VectorXf(*(_tmp)).dot(attenu);
-				attenu = attenu - relpar * ((sys_atn - _sino[i]) / syssys[i]) * *(_tmp);
-				//cout << "\ntmpsum:" << _tmp->sum() << ", sysatn:" << sys_atn << ", sinosum:" << _sino[i] << ", syssys:" << syssys[i];
+
+			if (debug == true) {
+				for (int i = 0; i < n_view * n_detector / block_num; i++) {
+					_sysmatblock = new MatrixXf(sysmat.middleRows(i * block_num, block_num).eval());
+					imgdiff_art = Eigen::VectorXf::Zero(n_detector * n_detector);
+					for (int j = 0; j < block_num; j++) {
+						sys_atn = VectorXf(_sysmatblock->row(j)).dot(attenu);
+						sys_sys = VectorXf(_sysmatblock->row(j)).dot(VectorXf(_sysmatblock->row(j)));
+						//sys_atn = VectorXf(*(_tmp)).dot(attenu);
+						imgdiff_art = imgdiff_art + ((sys_atn - _sino[i * block_num + j]) / sys_sys) * VectorXf(_sysmatblock->row(j));
+					}
+					attenu = attenu - (relpar / block_num) * imgdiff_art;
+					//cout << "\nIteration:" << attenu[50] << "," << attenu[100] << "," << attenu[400];
+					delete _sysmatblock;
+				}
+				diff = attenu.sum() - prevsum;
+				cout << "\rIteration:" << itrcount << ", diff:" << diff << string(10, ' ');
 			}
-			diff = attenu.sum() - prevsum;
-			cout << "\nIteration:" << itrcount << ", diff:" << diff << string(10, ' ');
-			//cout << "\nIteration:" << attenu[50] << "," << attenu[100] << "," << attenu[400];
+			else {
+				for (int i = 0; i < n_detector * n_view; i++)
+				{
+					*(_tmp) = sysmat.row(i);
+					sys_atn = VectorXf(*(_tmp)).dot(attenu);
+					syssys[i] = VectorXf(*(_tmp)).dot(VectorXf(*(_tmp)));
+					attenu = attenu - relpar * ((sys_atn - _sino[i]) / syssys[i]) * *(_tmp);  //シンプルなART．ray-by-ray（1光線ごと）で画像(attenu)を更新
+
+					//cout << "\ntmpsum:" << _tmp->sum() << ", sysatn:" << sys_atn << ", sinosum:" << _sino[i] << ", syssys:" << syssys[i];
+				}
+				diff = attenu.sum() - prevsum;
+				cout << "\rIteration:" << itrcount << ", diff:" << diff << string(10, ' ');
+				//cout << "\nIteration:" << attenu[50] << "," << attenu[100] << "," << attenu[400];
+			}
 
 
 
-			/*for (int i = 0; i < tvitr; i++) 
+
+
+
+			for (int i = 0; i < tvitr; i++) 
 			{
 
 				cout << "\nIteration:" << itrcount << ", TVitration:" << i;
 
 				*(_tmp) = attenu;
-				tv->calc_tv(&attenu, &imgdiff, 0.0001, true);
+				tv->calc_tv(&attenu, &imgdiff_tv, 0.0001, true);
 
-				attenu = attenu - imgdiff;
-				tvd->calc_tv(&attenu, &imgdiff, 0.0001, true);
+				attenu = attenu - imgdiff_tv;
+				tvd->calc_tv(&attenu, &imgdiff_tv, 0.0001, true);
 
 				if (tv < tvd) 
 				{
@@ -88,7 +116,7 @@ namespace Reconstruction {
 				}
 
 				tv = tvd;
-			}*/
+			}
 
 			itrcount++;
 		}

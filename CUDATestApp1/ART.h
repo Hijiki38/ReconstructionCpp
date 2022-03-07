@@ -30,12 +30,14 @@ namespace Reconstruction {
 
 		SpMat sysmat;
 		vector<Trip> materials;
-		Eigen::VectorXf attenu, imgdiff;
+		Eigen::VectorXf attenu, imgdiff_art, imgdiff_tv;
 
 		//bool is_conebeam = false;
 
 		float relpar = 1.05;
 		float relpard = 0.01;
+
+		int block_num;
 		
 		Reconstruction::geometry* geometry_normalized = new geometry();
 
@@ -56,11 +58,14 @@ namespace Reconstruction {
 			geometry_normalized->sdd = geometry->sdd / geometry->pixelsize;
 			geometry_normalized->axis_correction = geometry->axis_correction;
 
+			block_num = n_detector;
+			//block_num = 1;
 
 			sysmat = *(new SpMat(n_view * n_detector, n_detector * n_detector));
 			materials = *(new vector<Trip>(MAXMATERIALS));
 			attenu = Eigen::VectorXf::Zero(n_detector * n_detector);
-			imgdiff = Eigen::VectorXf::Zero(n_detector * n_detector);
+			imgdiff_tv = Eigen::VectorXf::Zero(n_detector * n_detector);
+			imgdiff_art = Eigen::VectorXf::Zero(n_detector * n_detector);
 		}
 
 		Eigen::VectorXf* reconstruction(int itr, int tvitr);

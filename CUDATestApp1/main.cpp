@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
 	{
 		art = new Reconstruction::ART(sg, &geo);
 		std::cout << "\nactivate ART";
-		result = (*art).reconstruction(30,5);
+		result = (*art).reconstruction(10,5);
 	}
 
 
