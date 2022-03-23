@@ -4,17 +4,12 @@
 #include <string>
 #include <vector>
 #include <math.h>
-#include "Eigen/Sparse"
-#include "sinogram.h"
+#include "PCCTsinogram.h"
 #include "TV.h"
 #include "point.h"
 #include "geometry.h"
+#include "SparseMatrix.h"
 
-//using namespace std;
-//using namespace Eigen;
-
-using Trip = Eigen::Triplet<float>;
-using SpMat = Eigen::SparseMatrix<float>;
 
 static const int MAXMATERIALS = 500000;
 extern const double PI;
@@ -23,34 +18,32 @@ namespace Reconstruction {
 
 
 
-	class ART {
+	class MLEM {
 	private:
-		int n_detector, n_view;
-		Reconstruction::sinogram* sino;
+		//int n_detector, n_view, n_bin;
+		Reconstruction::PCCTsinogram* sino;
 
-		SpMat sysmat;
-		vector<Trip> materials;
-		Eigen::VectorXf attenu, imgdiff_art, imgdiff_tv;
-
+		SparseMatrix sysmat;
+		float *attenu, *imgdiff_art, *imgdiff_tv;
 		float* img_result;
 		float* proj_original;
-
-		//bool is_conebeam = false;
 
 		float relpar = 1.05;
 		float relpard = 0.01;
 
 		int block_num;
-		
+
 		Reconstruction::geometry* geometry_normalized = new geometry();
 
 
 	public:
-		ART(Reconstruction::sinogram* s, Reconstruction::geometry* geometry) {
+		MLEM(Reconstruction::PCCTsinogram* s, Reconstruction::geometry* geometry) {
 
 			sino = s;
-			n_detector = (*s).get_nd();
-			n_view = (*s).get_nv();
+
+			int n_detector = (*s).get_nd();
+			int n_view = (*s).get_nv();
+			int n_bin = (*s).get_ne();
 
 			std::cout << "header, nd:" << n_detector << " nv:" << n_view << "\n";
 
@@ -64,18 +57,16 @@ namespace Reconstruction {
 			block_num = n_detector;
 			//block_num = 1;
 
-			sysmat = *(new SpMat(n_view * n_detector, n_detector * n_detector));
-			materials = *(new vector<Trip>(MAXMATERIALS));
-			attenu = Eigen::VectorXf::Zero(n_detector * n_detector);
-			imgdiff_tv = Eigen::VectorXf::Zero(n_detector * n_detector);
-			imgdiff_art = Eigen::VectorXf::Zero(n_detector * n_detector);
+			sysmat = *(new SparseMatrix());
+			attenu = (float*)malloc(n_detector * n_detector * n_bin * sizeof(float));
+			imgdiff_tv = (float*)malloc(n_detector * n_detector * n_bin * sizeof(float));
+			imgdiff_art = (float*)malloc(n_detector * n_detector * n_bin * sizeof(float));
 
 			img_result = (float*)malloc((unsigned long)n_detector * n_detector * sizeof(float));
 			proj_original = (float*)malloc((unsigned long)n_view * n_detector * sizeof(float));
 		}
 
-		Eigen::VectorXf* reconstruction(int itr, int tvitr = -1);
-		Eigen::VectorXf* reconstruction2(int itr);
+		float* reconstruction(int itr, int tvitr = -1);
 
 		void generate_sysmat(bool is_conebeam);
 		//void forwardprojection(float* proj, float* img, bool is_conebeam);

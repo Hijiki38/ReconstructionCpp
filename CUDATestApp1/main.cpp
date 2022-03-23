@@ -35,9 +35,8 @@ int main(int argc, char *argv[]) {
 	std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|R|E|C|O|N|S|T|R|U|C|T|O|R|\n+-+-+-+-+-+-+-+-+-+-+-+-+-+";
 	if (argc == 1) 
 	{
-		//inpath = ".";
-		//inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sinogram_total_f32.csv";
-		inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star360.csv";
+		inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sinogram_total_f32.csv";
+		//inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star360.csv";
 		//inpath = "D:\\tmp\\10-30_f32_2.csv";
 		//inpath = "E:\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star.csv";
 	}
@@ -83,6 +82,7 @@ int main(int argc, char *argv[]) {
 		art = new Reconstruction::ART(sg, &geo);
 		std::cout << "\nactivate ART";
 		result = (*art).reconstruction(10,5);
+		//result = (*art).reconstruction(10);
 	}
 
 

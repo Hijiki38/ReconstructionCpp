@@ -1,120 +1,25 @@
-#include "ART.h"
+#include "MLEM.h"
 
 using std::cout;
 using namespace Eigen;
 
 namespace Reconstruction {
 
-	VectorXf* ART::reconstruction2(int itr) {  //system matrix‚ğŒvZ‚µ‚È‚¢•û–@
 
-		/*float prevsum, diff;
-		int itrcount;
-		float sys_atn, sys_sys;
-		float* syssys = (float*)malloc(sizeof(float) * n_detector * n_view);
-		float* sysrow_dev;
-		float* syssys_dev;
-		VectorXf _sino = (*sino).get_sinovec();
-		MatrixXf* _sysmatblock = new MatrixXf(block_num, n_detector * n_detector);
-		VectorXf* _tmp = new VectorXf(n_detector * n_detector);
-
-		TV* tv = new TV();
-		TV* tvd = new TV();
-
-		float* img_tmp = (float*)malloc((unsigned long)n_detector * n_detector * sizeof(float));
-		float* proj_diff = (float*)malloc((unsigned long)n_view * n_detector * sizeof(float));
-		float* proj_tmp = (float*)malloc((unsigned long)n_view * n_detector * sizeof(float));
-
-		bool block = true;
-
-		itrcount = 0;
-		for (itrcount = 0; itrcount < itr; itrcount++)
-		{
-			for (int i = 0; i < n_view * n_detector / block_num; i++) {
-
-				forwardprojection(geometry_normalized->is_conebeam);
-
-				for (int j = 0; j < block_num; j++) {
-					proj_diff[i * block_num + j] = proj_original[i * block_num + j] - proj_tmp[i * block_num + j];
-				}
-					
-				backprojection(geometry_normalized->is_conebeam);
-
-				for (int j = 0; j < n_detector * n_detector; j++) {
-					img_result[j] += (float)relpar * img_tmp[j];
-				}
-			}
-			cout << "\rIteration:" << itrcount;
-		}
-
-		free(img_tmp);
-		free(proj_diff);
-		free(proj_tmp);*/
-	}
-
-	//void ART::forwardprojection(float* proj, float* img, bool is_conebeam) {
-
-	//	for (int i = 0; i < n_view * n_detector; i++) {
-	//		proj[i] = 0;
-	//	}
-
-	//	for (int y = 0; y < n_detector; y++)
-	//	{
-	//		cout << "\rGenerating System Matrix:" << y << " / " << n_detector << "\n";
-	//		for (int x = 0; x < n_detector; x++)
-	//		{
-	//			theta = 0;
-	//			point_abs.set_xy(x, y);
-
-	//			for (int p = 0; p < block_num; p++) {
-
-	//			}
-
-	//			for (int v = 0; v < n_view; v++)
-	//			{
-	//				phi = 0;
-	//				if (theta >= PI / 4)
-	//				{ //“Š‰eŠp‚ª45“x‚ğ’´‚¦‚½‚ç‰æ‘œ‚ğ90“x‰E‰ñ“]‚³‚¹“Š‰eŠp‚ğ - 45“x‚É
-	//					theta -= PI / 2;
-	//					point_abs.rotate90();
-	//					relx = point_abs.get_relative(point_abs.get_x());
-	//					rely = point_abs.get_relative(point_abs.get_inverted(point_abs.get_y()));
-	//				}
-	//				for (int w = 0; w < n_detector; w++)
-	//				{
-	//					offset_detector = (n_detector - w - 1 - center + 0.5) / cos(theta); //offset of the detector
-	//					if (is_conebeam)
-	//					{
-	//						//offset_detector_relative = offset_detector * (geometry_normalized->sod + relx) / geometry_normalized->sdd;
-	//						phi = atan2f(offset_detector, geometry_normalized->sdd);
-	//					}
-	//					intercept_Y = offset_detector - rely + relx * tan(theta + phi);
-
-	//					area = calc_area(intercept_Y, offset_detector, theta);
-	//					if (area != 0) {
-	//						material = new Trip(static_cast<float>(n_detector * v + w), static_cast<float>(n_detector * y + x), area);
-	//						materials.push_back(*material);
-	//					}
-
-	//				}
-	//				theta += 2 * PI / n_view;
-	//			}
-	//		}
-	//	}
-
-	//}
-
-	VectorXf* ART::reconstruction(int itr, int tvitr) 
+	float* MLEM::reconstruction(int itr, int tvitr)
 	{
-
+		int nd = (*sino).get_nd();
+		int nv = (*sino).get_nv();
+		int ne = (*sino).get_ne();
 		float prevsum, diff;
 		int itrcount;
 		float sys_atn, sys_sys;
-		float* syssys = (float*)malloc(sizeof(float) * n_detector * n_view);
+		float* syssys = (float*)malloc(sizeof(float) * nd * nv);
 		float* sysrow_dev;
 		float* syssys_dev;
-		VectorXf _sino = (*sino).get_sinovec();
-		MatrixXf* _sysmatblock = new MatrixXf(block_num, n_detector * n_detector);
-		VectorXf* _tmp = new VectorXf(n_detector * n_detector);
+		float* _sino = (*sino).get_sinovec();
+		MatrixXf* _sysmatblock = new MatrixXf(block_num, nd * nd);
+		VectorXf* _tmp = new VectorXf(nd * nd);
 
 		TV* tv = new TV();
 		TV* tvd = new TV();
@@ -123,18 +28,47 @@ namespace Reconstruction {
 
 		generate_sysmat(geometry_normalized->is_conebeam);
 
-		cout << "\n";
+		//cudaMalloc(&sysrow_dev, sizeof(float) * nd * nv);
+		//cudaMalloc(&syssys_dev, sizeof(float) * nd * nv);
 
+		//cout << "\n";
+		//for (int i = 0; i < nd * nv; i++)
+		//{
+		//	*(_tmp) = sysmat.row(i);
+		//	cout << "\rGenerating (sys * sys) :" << i << " / " << nd * nv;
+		//	//cudaMemcpy(sysrow_dev, _tmp, sizeof(float) * nd * nv, cudaMemcpyHostToDevice);
+		//	//cuda
+
+		//	//syssys[i] = VectorXf(*(_tmp)).dot(VectorXf(*(_tmp)));
+		//	//cout << "\rGenerating (sys * sys) :" << i << " / " << nd * nv;
+		//}
+
+
+
+		//// GPU‚ÅŒvZ
+		//gpu_function << <(N + 255) / 256, 256 >> > (dev_x, dev_y);
+
+		//// GPUËCPU‚Ìƒf[ƒ^ƒRƒs[
+		//cudaMemcpy(host_y, dev_y, N * sizeof(float), cudaMemcpyDeviceToHost);
+
+
+		cout << "\n";
+		//for (int i = 0; i < nd * nv; i++) 
+		//{
+		//	*(_tmp) = sysmat.row(i);
+		//	syssys[i] = VectorXf(*(_tmp)).dot(VectorXf(*(_tmp)));
+		//	//cout << "\rGenerating (sys * sys) :" << i << " / " << nd * nv;
+		//}
 
 		itrcount = 0;
-		while (itrcount < itr) 
-		{ 
-			prevsum = attenu.sum();
+		while (itrcount < itr)
+		{
+			//prevsum = attenu.sum();
 
 			if (block == true) { //block-ART
-				for (int i = 0; i < n_view * n_detector / block_num; i++) {
+				for (int i = 0; i < nv * nd / block_num; i++) {
 					_sysmatblock = new MatrixXf(sysmat.middleRows(i * block_num, block_num).eval());
-					imgdiff_art = Eigen::VectorXf::Zero(n_detector * n_detector);
+					imgdiff_art = Eigen::VectorXf::Zero(nd * nd);
 					for (int j = 0; j < block_num; j++) {
 						sys_atn = VectorXf(_sysmatblock->row(j)).dot(attenu);
 						sys_sys = VectorXf(_sysmatblock->row(j)).dot(VectorXf(_sysmatblock->row(j)));
@@ -147,7 +81,7 @@ namespace Reconstruction {
 				cout << "\rIteration:" << itrcount << ", diff:" << diff << string(10, ' ');
 			}
 			else {
-				for (int i = 0; i < n_detector * n_view; i++) // ray-by-ray ART
+				for (int i = 0; i < nd * nv; i++) // ray-by-ray ART
 				{
 					*(_tmp) = sysmat.row(i);
 					sys_atn = VectorXf(*(_tmp)).dot(attenu);
@@ -190,7 +124,7 @@ namespace Reconstruction {
 	}
 
 
-	void ART::generate_sysmat(bool is_conebeam) {
+	void MLEM::generate_sysmat(bool is_conebeam) {
 		int center;
 		float relx = 0;
 		float rely = 0;
@@ -203,46 +137,42 @@ namespace Reconstruction {
 		float area = 0;
 		Trip* material = NULL;
 
-		center = n_detector / 2;
+		center = nd / 2;
 		center_relative_x = 0;
 		center_relative_y = geometry_normalized->axis_correction;
 
-		cout << "\nStart Generationg System Matrix " << n_detector << " " << n_view << "\n";
+		cout << "\nStart Generationg System Matrix " << nd << " " << nv << "\n";
 		point_abs.set_center(center);
-		for (int y = 0; y < n_detector; y++) 
+		for (int y = 0; y < nd; y++)
 		{
-			cout << "\rGenerating System Matrix:" << y << " / " << n_detector << "\n";
-			for (int x = 0; x < n_detector; x++) 
+			cout << "\rGenerating System Matrix:" << y << " / " << nd << "\n";
+			for (int x = 0; x < nd; x++)
 			{
 				theta = 0;
 				point_abs.set_xy(x, y);
-				for (int v = 0; v < n_view; v++)
+				for (int v = 0; v < nv; v++)
 				{
 					phi = 0;
-					if (theta >= PI / 4) 
+					if (theta >= PI / 4)
 					{ //“Š‰eŠp‚ª45“x‚ğ’´‚¦‚½‚ç‰æ‘œ‚ğ90“x‰E‰ñ“]‚³‚¹“Š‰eŠp‚ğ - 45“x‚É
 						theta -= PI / 2;
 						point_abs.rotate90();
 						relx = point_abs.get_relative(point_abs.get_x());
 						rely = point_abs.get_relative(point_abs.get_inverted(point_abs.get_y()));
 					}
-					for (int w = 0; w < n_detector; w++) 
+					for (int w = 0; w < nd; w++)
 					{
-						offset_detector = (n_detector - w - 1 - center + 0.5) / cos(theta); //offset of the detector
-						if (is_conebeam) 
+						offset_detector = (nd - w - 1 - center + 0.5) / cos(theta); //offset of the detector
+						if (is_conebeam)
 						{
 							//offset_detector_relative = offset_detector * (geometry_normalized->sod + relx) / geometry_normalized->sdd;
 							phi = atan2f(offset_detector, geometry_normalized->sdd);
-							intercept_Y = offset_detector - rely + relx * tan(theta + phi);
-							area = calc_area_cbct(intercept_Y, offset_detector, theta);
 						}
-						else {
-							intercept_Y = offset_detector - rely + relx * tan(theta + phi);
-							area = calc_area(intercept_Y, offset_detector, theta);
-						}
+						intercept_Y = offset_detector - rely + relx * tan(theta + phi);
 
+						area = calc_area(intercept_Y, offset_detector, theta);
 						if (area != 0) {
-							material = new Trip(static_cast<float>(n_detector * v + w), static_cast<float>(n_detector * y + x), area);
+							material = new Trip(static_cast<float>(nd * v + w), static_cast<float>(nd * y + x), area);
 							materials.push_back(*material);
 						}
 
@@ -250,17 +180,17 @@ namespace Reconstruction {
 
 						//if (intercept_Y <= 0.5 * (1 - tan(theta)) and intercept_Y >= -0.5 * (1 - tan(theta))) 
 						//{
-						//	material = new Trip(static_cast<float>(n_detector * v + w), static_cast<float>(n_detector * y + x), 1);
+						//	material = new Trip(static_cast<float>(nd * v + w), static_cast<float>(nd * y + x), 1);
 						//	materials.push_back(*material);
 						//}
 						//else if (intercept_Y <= 0.5 * (1 + tan(theta)) and intercept_Y >= 0.5 * (1 - tan(theta))) 
 						//{
-						//	material = new Trip(static_cast<float>(n_detector * v + w), static_cast<float>(n_detector * y + x), 1);
+						//	material = new Trip(static_cast<float>(nd * v + w), static_cast<float>(nd * y + x), 1);
 						//	materials.push_back(*material);
 						//}
 
 					}
-					theta += 2 * PI / n_view;
+					theta += 2 * PI / nv;
 				}
 			}
 		}
@@ -317,7 +247,7 @@ namespace Reconstruction {
 			if (l2 >= 2 * a) {
 				return a * (l1 + l2) - (l2 - 2 * a) * (l2 - 2 * a) / (2 * (l2 - l1));
 			}
-			else if(l2 >= 0){
+			else if (l2 >= 0) {
 				return a * (l1 + l2);
 			}
 			else {

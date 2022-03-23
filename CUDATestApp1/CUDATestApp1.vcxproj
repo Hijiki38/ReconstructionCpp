@@ -144,9 +144,12 @@
     <ClCompile Include="ART.cpp" />
     <ClCompile Include="FBP.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MLEM.cpp" />
+    <ClCompile Include="PCCTsinogram.cpp" />
     <ClCompile Include="point.cpp" />
     <ClCompile Include="ReconstructionAlgorithm.cpp" />
     <ClCompile Include="sinogram.cpp" />
+    <ClCompile Include="SparseMatrix.cpp" />
     <ClCompile Include="TV.cpp" />
     <ClCompile Include="methods.cpp" />
   </ItemGroup>
@@ -186,8 +189,11 @@
     <ClInclude Include="ART.h" />
     <ClInclude Include="consts.h" />
     <ClInclude Include="geometry.h" />
+    <ClInclude Include="MLEM.h" />
+    <ClInclude Include="PCCTsinogram.h" />
     <ClInclude Include="point.h" />
     <ClInclude Include="sinogram.h" />
+    <ClInclude Include="SparseMatrix.h" />
     <ClInclude Include="TV.h" />
     <ClInclude Include="methods.h" />
   </ItemGroup>
