@@ -29,5 +29,14 @@ namespace Reconstruction {
 			nonzero = nz;
 		}
 
+		float* get_elements() { return elements; }
+		int* get_rowptr() { return rowptr; }
+		int* get_colind() { return colind; }
+		int get_nonzero() { return nonzero; }
+
+		float* Extract_row(SparseMatrix mat, int begin, int rows) {
+
+		}
+
 	};
 }

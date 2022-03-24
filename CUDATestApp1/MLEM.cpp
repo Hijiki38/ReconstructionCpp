@@ -18,7 +18,7 @@ namespace Reconstruction {
 		float* sysrow_dev;
 		float* syssys_dev;
 		float* _sino = (*sino).get_sinovec();
-		MatrixXf* _sysmatblock = new MatrixXf(block_num, nd * nd);
+		float* _sysmatblock;
 		VectorXf* _tmp = new VectorXf(nd * nd);
 
 		TV* tv = new TV();
@@ -67,14 +67,28 @@ namespace Reconstruction {
 
 			if (block == true) { //block-ART
 				for (int i = 0; i < nv * nd / block_num; i++) {
-					_sysmatblock = new MatrixXf(sysmat.middleRows(i * block_num, block_num).eval());
-					imgdiff_art = Eigen::VectorXf::Zero(nd * nd);
-					for (int j = 0; j < block_num; j++) {
-						sys_atn = VectorXf(_sysmatblock->row(j)).dot(attenu);
-						sys_sys = VectorXf(_sysmatblock->row(j)).dot(VectorXf(_sysmatblock->row(j)));
-						imgdiff_art = imgdiff_art + ((sys_atn - _sino[i * block_num + j]) / sys_sys) * VectorXf(_sysmatblock->row(j));
+
+					_sysmatblock = sysmat.Extract_row(sysmat, i * block_num, block_num);
+
+					//_sysmatblock = new MatrixXf(sysmat.middleRows(i * block_num, block_num).eval());
+					//imgdiff_art = std::vector<float>(nd * nd, 0);
+					//imgdiff = (float*)malloc(nd * nd * sizeof(float));
+					for (int j = 0; j < nd * nd * ne; j++) {
+						imgdiff[j] = 0;
 					}
-					attenu = attenu - (relpar / block_num) * imgdiff_art;
+
+					//imgdiff_art = Eigen::VectorXf::Zero(nd * nd);
+					for (int j = 0; j < block_num; j++) {
+
+						sys_atn = _sysmatblock.row(i * block_num + j).dot(attenu);
+						sys_sys = _sysmatblock.row(i * block_num + j).dot(_sysmatblock->row(i * block_num + j));
+						imgdiff = imgdiff + ((sys_atn - _sino[i * block_num + j]) / sys_sys) * _sysmatblock->row(j);
+
+						//sys_atn = VectorXf(_sysmatblock->row(j)).dot(attenu);
+						//sys_sys = VectorXf(_sysmatblock->row(j)).dot(VectorXf(_sysmatblock->row(j)));
+						//imgdiff = imgdiff + ((sys_atn - _sino[i * block_num + j]) / sys_sys) * VectorXf(_sysmatblock->row(j));
+					}
+					attenu = attenu - (relpar / block_num) * imgdiff;
 					delete _sysmatblock;
 				}
 				diff = attenu.sum() - prevsum;

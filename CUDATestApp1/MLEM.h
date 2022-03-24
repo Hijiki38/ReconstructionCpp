@@ -24,7 +24,7 @@ namespace Reconstruction {
 		Reconstruction::PCCTsinogram* sino;
 
 		SparseMatrix sysmat;
-		float *attenu, *imgdiff_art, *imgdiff_tv;
+		float *attenu, *imgdiff, *imgdiff_tv;
 		float* img_result;
 		float* proj_original;
 
@@ -43,7 +43,7 @@ namespace Reconstruction {
 
 			int n_detector = (*s).get_nd();
 			int n_view = (*s).get_nv();
-			int n_bin = (*s).get_ne();
+			int n_bin = 1;// (*s).get_ne();  //‚Æ‚è‚ ‚¦‚¸single bin
 
 			std::cout << "header, nd:" << n_detector << " nv:" << n_view << "\n";
 
@@ -60,7 +60,7 @@ namespace Reconstruction {
 			sysmat = *(new SparseMatrix());
 			attenu = (float*)malloc(n_detector * n_detector * n_bin * sizeof(float));
 			imgdiff_tv = (float*)malloc(n_detector * n_detector * n_bin * sizeof(float));
-			imgdiff_art = (float*)malloc(n_detector * n_detector * n_bin * sizeof(float));
+			imgdiff = (float*)malloc(n_detector * n_detector * n_bin * sizeof(float));
 
 			img_result = (float*)malloc((unsigned long)n_detector * n_detector * sizeof(float));
 			proj_original = (float*)malloc((unsigned long)n_view * n_detector * sizeof(float));
