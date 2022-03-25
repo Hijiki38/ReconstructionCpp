@@ -34,7 +34,11 @@ namespace Reconstruction {
 		int* get_colind() { return colind; }
 		int get_nonzero() { return nonzero; }
 
-		float* Extract_row(SparseMatrix mat, int begin, int rows) {
+		SparseMatrix Extract_blockmat(SparseMatrix mat, int begin, int rows) {
+
+		}
+
+		float* Extract_row(SparseMatrix mat, int row) {
 
 		}
 
