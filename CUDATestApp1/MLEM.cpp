@@ -18,8 +18,10 @@ namespace Reconstruction {
 		float* sysrow_dev;
 		float* syssys_dev;
 		float* _sino = (*sino).get_sinovec();
-		float* _sysmatblock;
-		VectorXf* _tmp = new VectorXf(nd * nd);
+
+		SparseMatrix _sysmatblock;
+		float* _sysmatrow = (float*)malloc(sizeof(float) * nd * nd);
+		//VectorXf* _tmp = new VectorXf(nd * nd);
 
 		TV* tv = new TV();
 		TV* tvd = new TV();
@@ -63,78 +65,47 @@ namespace Reconstruction {
 		itrcount = 0;
 		while (itrcount < itr)
 		{
-			//prevsum = attenu.sum();
+			prevsum = Reconstruction::sum_array(attenu);
 
 			if (block == true) { //block-ART
 				for (int i = 0; i < nv * nd / block_num; i++) {
 
-					_sysmatblock = sysmat.Extract_row(sysmat, i * block_num, block_num);
+					_sysmatblock = sysmat.Extract_blockmat(i * block_num, block_num);
 
 					//_sysmatblock = new MatrixXf(sysmat.middleRows(i * block_num, block_num).eval());
 					//imgdiff_art = std::vector<float>(nd * nd, 0);
 					//imgdiff = (float*)malloc(nd * nd * sizeof(float));
-					for (int j = 0; j < nd * nd * ne; j++) {
+					for (int j = 0; j < nd * nd; j++) {
 						imgdiff[j] = 0;
 					}
 
 					//imgdiff_art = Eigen::VectorXf::Zero(nd * nd);
 					for (int j = 0; j < block_num; j++) {
 
-						sys_atn = _sysmatblock.row(i * block_num + j).dot(attenu);
-						sys_sys = _sysmatblock.row(i * block_num + j).dot(_sysmatblock->row(i * block_num + j));
-						imgdiff = imgdiff + ((sys_atn - _sino[i * block_num + j]) / sys_sys) * _sysmatblock->row(j);
+						_sysmatrow = _sysmatblock.Extract_row_dense(j, nd * nd);
+
+						sys_atn = Reconstruction::dot_array(_sysmatrow, attenu);
+						sys_sys = Reconstruction::dot_array(_sysmatrow, _sysmatrow);
+						imgdiff = Reconstruction::add_array(imgdiff, Reconstruction::mul_array(((sys_atn - _sino[i * block_num + j]) / sys_sys), _sysmatrow));
 
 						//sys_atn = VectorXf(_sysmatblock->row(j)).dot(attenu);
 						//sys_sys = VectorXf(_sysmatblock->row(j)).dot(VectorXf(_sysmatblock->row(j)));
 						//imgdiff = imgdiff + ((sys_atn - _sino[i * block_num + j]) / sys_sys) * VectorXf(_sysmatblock->row(j));
 					}
-					attenu = attenu - (relpar / block_num) * imgdiff;
-					delete _sysmatblock;
+					//attenu = attenu - (relpar / block_num) * imgdiff;
+					attenu = Reconstruction::sub_array(attenu, Reconstruction::mul_array((relpar / block_num), imgdiff));
+					//delete _sysmatblock;
 				}
-				diff = attenu.sum() - prevsum;
+				diff = Reconstruction::sum_array(attenu) - prevsum;
 				cout << "\rIteration:" << itrcount << ", diff:" << diff << string(10, ' ');
 			}
-			else {
-				for (int i = 0; i < nd * nv; i++) // ray-by-ray ART
-				{
-					*(_tmp) = sysmat.row(i);
-					sys_atn = VectorXf(*(_tmp)).dot(attenu);
-					syssys[i] = VectorXf(*(_tmp)).dot(VectorXf(*(_tmp)));
-					attenu = attenu - relpar * ((sys_atn - _sino[i]) / syssys[i]) * *(_tmp);
-				}
-				diff = attenu.sum() - prevsum;
-				cout << "\rIteration:" << itrcount << ", diff:" << diff << string(10, ' ');
-			}
-
-
-			if (tvitr != -1) {
-				for (int i = 0; i < tvitr; i++)
-				{
-					cout << "\nIteration:" << itrcount << ", TVitration:" << i;
-
-					*(_tmp) = attenu;
-					tv->calc_tv(&attenu, &imgdiff_tv, 0.0001, true);
-
-					attenu = attenu - imgdiff_tv;
-					tvd->calc_tv(&attenu, &imgdiff_tv, 0.0001, true);
-
-					cout << "tv:" << tv << ", tvd:" << tvd << "\n";
-					if (tv < tvd)
-					{
-						attenu = *(_tmp);
-					}
-
-					tv = tvd;
-				}
-			}
-
 
 			itrcount++;
 		}
 
 		cout << "\n end iteration!";
 
-		return &attenu;
+		return attenu;
 	}
 
 
@@ -143,13 +114,24 @@ namespace Reconstruction {
 		float relx = 0;
 		float rely = 0;
 
+		int nd = sino->get_nd();
+		int nv = sino->get_nv();
+
+		int nonzerocount = 0;
+		bool firstelem = true;
+
 		point point_abs(0, 0, 0);
 
 		float theta, phi;
 		float offset_detector, offset_detector_relative, intercept_Y;
 		float center_relative_x, center_relative_y;
 		float area = 0;
-		Trip* material = NULL;
+	/*	Trip* material = NULL;*/
+
+		float* elements;	//all nonzero values
+		int* rowptr;		//indices of the first nonzero element in each row
+		int* colind;		//the column indices of the corresponding elements
+		int nonzero = 0;		//the number of nonzero elements
 
 		center = nd / 2;
 		center_relative_x = 0;
@@ -166,6 +148,7 @@ namespace Reconstruction {
 				point_abs.set_xy(x, y);
 				for (int v = 0; v < nv; v++)
 				{
+					firstelem = true;
 					phi = 0;
 					if (theta >= PI / 4)
 					{ //“Š‰eŠp‚ª45“x‚ð’´‚¦‚½‚ç‰æ‘œ‚ð90“x‰E‰ñ“]‚³‚¹“Š‰eŠp‚ð - 45“x‚É
@@ -186,23 +169,16 @@ namespace Reconstruction {
 
 						area = calc_area(intercept_Y, offset_detector, theta);
 						if (area != 0) {
-							material = new Trip(static_cast<float>(nd * v + w), static_cast<float>(nd * y + x), area);
-							materials.push_back(*material);
+							elements[nonzero] = area;
+							colind[nonzero] = nd * v + w;
+							if (firstelem) {
+								rowptr[nd * v + w] = nonzero;
+								firstelem = false;
+							}
+
+							//material = new Trip(static_cast<float>(nd * v + w), static_cast<float>(nd * y + x), area);
+							//materials.push_back(*material);
 						}
-
-
-
-						//if (intercept_Y <= 0.5 * (1 - tan(theta)) and intercept_Y >= -0.5 * (1 - tan(theta))) 
-						//{
-						//	material = new Trip(static_cast<float>(nd * v + w), static_cast<float>(nd * y + x), 1);
-						//	materials.push_back(*material);
-						//}
-						//else if (intercept_Y <= 0.5 * (1 + tan(theta)) and intercept_Y >= 0.5 * (1 - tan(theta))) 
-						//{
-						//	material = new Trip(static_cast<float>(nd * v + w), static_cast<float>(nd * y + x), 1);
-						//	materials.push_back(*material);
-						//}
-
 					}
 					theta += 2 * PI / nv;
 				}
@@ -210,10 +186,11 @@ namespace Reconstruction {
 		}
 		cout << "End Generating System Matrix";
 
-		sysmat.setFromTriplets(materials.begin(), materials.end());
+		//sysmat.setFromTriplets(materials.begin(), materials.end());
+		sysmat = SparseMatrix(elements, rowptr, colind, nonzero);
 	}
 
-	float ART::calc_area(float intercept, float detectoroffset, float angle) {
+	float MLEM::calc_area(float intercept, float detectoroffset, float angle) {
 		float la1, la2, lb1, lb2, sa, sb;
 		float a = 0.5;
 
@@ -230,7 +207,7 @@ namespace Reconstruction {
 		return (2 * a) * (2 * a) - (sa + sb);
 	}
 
-	float ART::calc_area_cbct(float intercept, float detectoroffset, float angle) {
+	float MLEM::calc_area_cbct(float intercept, float detectoroffset, float angle) {
 		float la1, la2, lb1, lb2, sa, sb;
 		float a = 0.5;
 		float tan_angle = tan(angle);
@@ -247,7 +224,7 @@ namespace Reconstruction {
 		return (2 * a) * (2 * a) - (sa + sb);
 	}
 
-	float ART::_calc_subarea(float l1, float l2, float a) {
+	float MLEM::_calc_subarea(float l1, float l2, float a) {
 
 		if (l1 >= 2 * a) {
 			if (l2 >= 2 * a) {
@@ -278,7 +255,7 @@ namespace Reconstruction {
 		}
 	}
 
-	geometry* ART::get_geometry() {
+	geometry* MLEM::get_geometry() {
 		return geometry_normalized;
 	}
 }

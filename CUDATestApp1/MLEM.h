@@ -9,6 +9,7 @@
 #include "point.h"
 #include "geometry.h"
 #include "SparseMatrix.h"
+#include "methods.h"
 
 
 static const int MAXMATERIALS = 500000;
