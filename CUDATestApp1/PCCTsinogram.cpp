@@ -8,7 +8,8 @@ namespace Reconstruction {
 
 	PCCTsinogram* PCCTsinogram::read_PCCTsinogram(std::vector<std::string> inpaths) {
 
-		vector<float> tmp_sino;
+		float* tmp_sino;
+		vector<float> tmp_sinovec;
 		bool is_first_file = true;
 		int count_row = 0;
 		int count_all = 0;
@@ -21,11 +22,9 @@ namespace Reconstruction {
 			cout << "readbin:" << count_bins << "\n";
 
 			while (getline(stream, line)) {
-				
-				//cout << "readrow:" << count_row << "\n";
 				vector<string> strs = Reconstruction::splitstring(line, ',');
 				for (int i = 0; i < strs.size(); i++) {
-					tmp_sino.push_back(stof(strs.at(i)));
+					tmp_sinovec.push_back(stof(strs.at(i)));
 					if(is_first_file){ count_all++; }
 				}
 
@@ -36,6 +35,8 @@ namespace Reconstruction {
 			is_first_file = false;
 		}
 
+		tmp_sino = (float*)malloc(sizeof(float) * tmp_sinovec.size());
+		std::copy(tmp_sinovec.begin(), tmp_sinovec.end(), tmp_sino);
 
 		cout << "d: " << (count_all / count_row) << ", v: " << count_row << ", e: " << count_bins << "\n";
 

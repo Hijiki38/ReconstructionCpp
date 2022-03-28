@@ -14,21 +14,24 @@ namespace Reconstruction {
 		float prevsum, diff;
 		int itrcount;
 		float sys_atn, sys_sys;
-		float* syssys = (float*)malloc(sizeof(float) * nd * nv);
-		float* sysrow_dev;
-		float* syssys_dev;
+		//float* syssys = (float*)malloc(sizeof(float) * nd * nv);
+		//float* sysrow_dev;
+		//float* syssys_dev;
 		float* _sino = (*sino).get_sinovec();
 
 		SparseMatrix _sysmatblock;
 		float* _sysmatrow = (float*)malloc(sizeof(float) * nd * nd);
-		//VectorXf* _tmp = new VectorXf(nd * nd);
 
 		TV* tv = new TV();
 		TV* tvd = new TV();
 
 		bool block = true;
 
-		generate_sysmat(geometry_normalized->is_conebeam);
+		//for (int i = 0; i < nd * nd; i++) {
+		//	_sysmatrow[i] = 0;
+		//}
+
+		sysmat = *(generate_sysmat());
 
 		//cudaMalloc(&sysrow_dev, sizeof(float) * nd * nv);
 		//cudaMalloc(&syssys_dev, sizeof(float) * nd * nv);
@@ -70,7 +73,7 @@ namespace Reconstruction {
 			if (block == true) { //block-ART
 				for (int i = 0; i < nv * nd / block_num; i++) {
 
-					_sysmatblock = sysmat.Extract_blockmat(i * block_num, block_num);
+					_sysmatblock = *(sysmat.Create_blockmat(i * block_num, block_num));
 
 					//_sysmatblock = new MatrixXf(sysmat.middleRows(i * block_num, block_num).eval());
 					//imgdiff_art = std::vector<float>(nd * nd, 0);
@@ -82,7 +85,8 @@ namespace Reconstruction {
 					//imgdiff_art = Eigen::VectorXf::Zero(nd * nd);
 					for (int j = 0; j < block_num; j++) {
 
-						_sysmatrow = _sysmatblock.Extract_row_dense(j, nd * nd);
+						std::cout << "size:" << sizeof(_sysmatrow) << "nd: " << nd << std::endl;
+						_sysmatblock.Extract_row_dense(j, nd * nd, _sysmatrow);
 
 						sys_atn = Reconstruction::dot_array(_sysmatrow, attenu);
 						sys_sys = Reconstruction::dot_array(_sysmatrow, _sysmatrow);
@@ -105,11 +109,13 @@ namespace Reconstruction {
 
 		cout << "\n end iteration!";
 
+		//free(_sysmatrow);
+
 		return attenu;
 	}
 
 
-	void MLEM::generate_sysmat(bool is_conebeam) {
+	std::unique_ptr<SparseMatrix> MLEM::generate_sysmat() {
 		int center;
 		float relx = 0;
 		float rely = 0;
@@ -122,15 +128,18 @@ namespace Reconstruction {
 
 		point point_abs(0, 0, 0);
 
+		int rotatecount = 0;
+
 		float theta, phi;
 		float offset_detector, offset_detector_relative, intercept_Y;
 		float center_relative_x, center_relative_y;
 		float area = 0;
 	/*	Trip* material = NULL;*/
 
-		float* elements;	//all nonzero values
-		int* rowptr;		//indices of the first nonzero element in each row
-		int* colind;		//the column indices of the corresponding elements
+		float* elements = (float*)malloc(sizeof(float) * 5000000);	//all nonzero values
+		int* rowptr = (int*)malloc(sizeof(int) * (nd * nv + 1));		//indices of the first nonzero element in each row
+		int* colind = (int*)malloc(sizeof(int) * 5000000);		//the column indices of the corresponding elements
+
 		int nonzero = 0;		//the number of nonzero elements
 
 		center = nd / 2;
@@ -139,9 +148,87 @@ namespace Reconstruction {
 
 		cout << "\nStart Generationg System Matrix " << nd << " " << nv << "\n";
 		point_abs.set_center(center);
+
+		theta = 0;
+		for (int v = 0; v < nv; v++) 
+		{
+			cout << "\rGenerating System Matrix:" << y << " / " << nd << "\n";
+			std::cout << "nonzero: " << nonzero << std::endl;
+			std::cout << "colind: " << colind[nonzero - 1] << std::endl;
+			std::cout << "elem: " << elements[nonzero - 1] << std::endl;
+			std::cout << "rptr: " << rowptr[nd * y - 1] << std::endl;
+
+			if (theta >= PI / 4)
+			{ //“Š‰eŠp‚ª45“x‚ð’´‚¦‚½‚ç‰æ‘œ‚ð90“x‰E‰ñ“]‚³‚¹“Š‰eŠp‚ð - 45“x‚É
+				rotatecount++;
+				theta -= PI / 2;
+				point_abs.rotate90();
+				relx = point_abs.get_relative(point_abs.get_x());
+				rely = point_abs.get_relative(point_abs.get_inverted(point_abs.get_y()));
+			}
+
+			for (int w = 0; w < nd; w++) 
+			{
+				for (int y = 0; y < nd; y++)
+				{
+
+					for (int x = 0; x < nd; x++)
+					{
+						//theta = 0;
+						point_abs.set_xy(x, y);
+						for (int v = 0; v < nv; v++)
+						{
+							firstelem = true;
+							phi = 0;
+							if (theta >= PI / 4)
+							{ //“Š‰eŠp‚ª45“x‚ð’´‚¦‚½‚ç‰æ‘œ‚ð90“x‰E‰ñ“]‚³‚¹“Š‰eŠp‚ð - 45“x‚É
+								theta -= PI / 2;
+								point_abs.rotate90();
+								relx = point_abs.get_relative(point_abs.get_x());
+								rely = point_abs.get_relative(point_abs.get_inverted(point_abs.get_y()));
+							}
+							for (int w = 0; w < nd; w++)
+							{
+								offset_detector = (nd - w - 1 - center + 0.5) / cos(theta); //offset of the detector
+								if (geometry_normalized->is_conebeam)
+								{
+									//offset_detector_relative = offset_detector * (geometry_normalized->sod + relx) / geometry_normalized->sdd;
+									phi = atan2f(offset_detector, geometry_normalized->sdd);
+								}
+								intercept_Y = offset_detector - rely + relx * tan(theta + phi);
+
+								area = calc_area(intercept_Y, offset_detector, theta);
+								if (area != 0) {
+									elements[nonzero] = area;
+									colind[nonzero] = nd * y + x;
+									if (firstelem) {
+										rowptr[nd * v + w] = nonzero;
+										firstelem = false;
+									}
+
+									//material = new Trip(static_cast<float>(nd * v + w), static_cast<float>(nd * y + x), area);
+									//materials.push_back(*material);
+									nonzero++;
+								}
+							}
+							theta += 2 * PI / nv;
+						}
+					}
+				}
+			}
+		}
+
+		
+
+
 		for (int y = 0; y < nd; y++)
 		{
 			cout << "\rGenerating System Matrix:" << y << " / " << nd << "\n";
+			std::cout << "nonzero: " << nonzero << std::endl;
+			std::cout << "colind: " << colind[nonzero - 1] << std::endl;
+			std::cout << "elem: " << elements[nonzero - 1] << std::endl;
+			std::cout << "rptr: " << rowptr[nd * y - 1] << std::endl;
+
 			for (int x = 0; x < nd; x++)
 			{
 				theta = 0;
@@ -155,12 +242,12 @@ namespace Reconstruction {
 						theta -= PI / 2;
 						point_abs.rotate90();
 						relx = point_abs.get_relative(point_abs.get_x());
-						rely = point_abs.get_relative(point_abs.get_inverted(point_abs.get_y()));
+						rely = point_abs.get_relative(point_abs.get_inverted(point_abs.get_y())); //yŽ²‚Í‹t‚È‚Ì‚Å”½“]
 					}
 					for (int w = 0; w < nd; w++)
 					{
 						offset_detector = (nd - w - 1 - center + 0.5) / cos(theta); //offset of the detector
-						if (is_conebeam)
+						if (geometry_normalized->is_conebeam)
 						{
 							//offset_detector_relative = offset_detector * (geometry_normalized->sod + relx) / geometry_normalized->sdd;
 							phi = atan2f(offset_detector, geometry_normalized->sdd);
@@ -170,7 +257,7 @@ namespace Reconstruction {
 						area = calc_area(intercept_Y, offset_detector, theta);
 						if (area != 0) {
 							elements[nonzero] = area;
-							colind[nonzero] = nd * v + w;
+							colind[nonzero] = nd * y + x;
 							if (firstelem) {
 								rowptr[nd * v + w] = nonzero;
 								firstelem = false;
@@ -178,16 +265,24 @@ namespace Reconstruction {
 
 							//material = new Trip(static_cast<float>(nd * v + w), static_cast<float>(nd * y + x), area);
 							//materials.push_back(*material);
+							nonzero++;
 						}
 					}
 					theta += 2 * PI / nv;
 				}
 			}
 		}
+
 		cout << "End Generating System Matrix";
 
 		//sysmat.setFromTriplets(materials.begin(), materials.end());
-		sysmat = SparseMatrix(elements, rowptr, colind, nonzero);
+		//sysmat = SparseMatrix(elements, rowptr, colind, nonzero);
+
+		std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(elements, rowptr, colind, nonzero));
+		
+		return sysmatptr;
+		//sysmat = *(sysmatptr);
+
 	}
 
 	float MLEM::calc_area(float intercept, float detectoroffset, float angle) {

@@ -12,7 +12,7 @@
 #include "methods.h"
 
 
-static const int MAXMATERIALS = 500000;
+//static const int MAXMATERIALS = 500000;
 extern const double PI;
 
 namespace Reconstruction {
@@ -69,7 +69,7 @@ namespace Reconstruction {
 
 		float* reconstruction(int itr, int tvitr = -1);
 
-		void generate_sysmat(bool is_conebeam);
+		std::unique_ptr<SparseMatrix> generate_sysmat();
 		//void forwardprojection(float* proj, float* img, bool is_conebeam);
 		//void backprojection(float* proj, float* img, bool is_conebeam);
 

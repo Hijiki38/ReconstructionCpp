@@ -12,10 +12,26 @@ namespace Reconstruction {
 	void point::set_xy(float _x, float _y) { x = _x; y = _y; }
 	void point::set_center(float _center) { center = _center; }
 
-	void point::rotate90() {
-		float tmp_x = x;
-		x = get_inverted(y);
-		y = tmp_x;
+	void point::rotate90(int rotatecount) {
+
+		switch (rotatecount % 4) {
+		case 0:
+			break;
+		case 1:
+			float tmp_x = x;
+			x = get_inverted(y);
+			y = tmp_x;
+			break;
+		case 2:
+			x = get_inverted(x);
+			y = get_inverted(y);
+			break;
+		case 3:
+			float tmp_x = x;
+			x = get_inverted(y);
+			y = get_inverted(tmp_x);
+			break;
+		}
 	}
 
 }

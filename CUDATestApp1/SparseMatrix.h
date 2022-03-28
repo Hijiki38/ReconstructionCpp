@@ -34,48 +34,50 @@ namespace Reconstruction {
 		int* get_colind() { return colind; }
 		int get_nonzero() { return nonzero; }
 
-		SparseMatrix Extract_blockmat(int begin, int rows) {
+		std::unique_ptr<SparseMatrix> Create_blockmat(int begin, int rows) {
 
-			float* elements_new;	
-			int* rowptr_new;	
-			int* colind_new;	
+			int elem_num = colind[begin + rows] - colind[begin];
 
-			float* elements_orig = elements;	
-			int* rowptr_orig = rowptr;		
-			int* colind_orig = colind;
-
-			int elem_begin, elem_num;
-
-
-			elem_begin = colind_orig[begin];
-			elem_num = colind_orig[begin + rows] - elem_begin;
-
-			elements_new = (float*)malloc(elem_num * sizeof(float));
-			rowptr_new = (int*)malloc((rows + 1) * sizeof(int));
-			colind_new = (int*)malloc(elem_num * sizeof(float));
+			float* elements_new = (float*)malloc(elem_num * sizeof(float));
+			int* rowptr_new = (int*)malloc((rows + 1) * sizeof(int));
+			int* colind_new = (int*)malloc(elem_num * sizeof(float));
 
 
 
-			if (colind_new != NULL && elements_new != NULL && rowptr_new != NULL) {
-				for (int i = 0; i < rows; i++) {
-					rowptr_new[i] = rowptr_orig[begin + i] - elem_begin;
-				}
-				rowptr_new[rows] = elem_num;
-
-				for (int i = 0; i < elem_num; i++) {
-					elements_new[i] = elements_orig[i + elem_begin];
-					colind_new[i] = colind_orig[i + elem_begin];
-				}
+			for (int i = 0; i < rows; i++) {
+				rowptr_new[i] = rowptr[begin + i] - colind[begin];
+				std::cout << rowptr_new[i] << std::endl;
 			}
-			else {
-				std::cerr << "Refering Null Array!";
+			rowptr_new[rows] = elem_num;
+
+			for (int i = 0; i < elem_num; i++) {
+				elements_new[i] = elements[i + colind[begin]];
+				colind_new[i] = colind[i + colind[begin]];
+				std:cout << "new colind: " << colind_new[i] << std::endl;
 			}
 
-			return SparseMatrix(elements_new, rowptr_new, colind_new, elem_num);
 
+
+			std::unique_ptr<SparseMatrix> spmat(new SparseMatrix(elements_new, rowptr_new, colind_new, elem_num));
+
+			return spmat;
 		}
 
-		float* Extract_row_dense(int row, int num_col) {
+		void Extract_row_dense(int row, int num_col, float* vec) {
+
+			//if (sizeof(vec) != sizeof(float) * num_col) {
+			//	std::cerr << "size of the vector must be: sizeof(float) * " << num_col << ", but it's  * " << (sizeof(vec) / sizeof(float));
+			//}
+
+			for (int i = 0; i < num_col; i++) {
+				vec[i] = 0;
+			}
+
+			for (int i = rowptr[row]; i < rowptr[row + 1]; i++) {
+				int tmp = colind[i];
+				std::cout << tmp << std::endl;
+				vec[colind[i]] = elements[i];
+			}
 
 		}
 

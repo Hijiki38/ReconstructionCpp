@@ -21,6 +21,6 @@ namespace Reconstruction {
 		void set_y(float _y);
 		void set_xy(float _x, float _y);
 		void set_center(float _center);
-		void rotate90();
+		void rotate90(int rotatecount);
 	};
 }
