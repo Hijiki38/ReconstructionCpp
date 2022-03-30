@@ -147,7 +147,7 @@
     <ClCompile Include="MLEM.cpp" />
     <ClCompile Include="PCCTsinogram.cpp" />
     <ClCompile Include="point.cpp" />
-    <ClCompile Include="ReconstructionAlgorithm.cpp" />
+    <ClCompile Include="IterationRec.cpp" />
     <ClCompile Include="sinogram.cpp" />
     <ClCompile Include="SparseMatrix.cpp" />
     <ClCompile Include="TV.cpp" />
@@ -192,6 +192,7 @@
     <ClInclude Include="MLEM.h" />
     <ClInclude Include="PCCTsinogram.h" />
     <ClInclude Include="point.h" />
+    <ClInclude Include="IterationRec.h" />
     <ClInclude Include="sinogram.h" />
     <ClInclude Include="SparseMatrix.h" />
     <ClInclude Include="TV.h" />

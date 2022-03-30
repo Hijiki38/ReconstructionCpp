@@ -36,24 +36,24 @@ namespace Reconstruction {
 
 		std::unique_ptr<SparseMatrix> Create_blockmat(int begin, int rows) {
 
-			int elem_num = colind[begin + rows] - colind[begin];
+			int elem_num = rowptr[begin + rows] - rowptr[begin];
 
 			float* elements_new = (float*)malloc(elem_num * sizeof(float));
 			int* rowptr_new = (int*)malloc((rows + 1) * sizeof(int));
 			int* colind_new = (int*)malloc(elem_num * sizeof(float));
 
-
+			//std::cout << "\nstart generating blockmat\n";
 
 			for (int i = 0; i < rows; i++) {
-				rowptr_new[i] = rowptr[begin + i] - colind[begin];
-				std::cout << rowptr_new[i] << std::endl;
+				rowptr_new[i] = rowptr[begin + i] - rowptr[begin];
+				//std::cout << rowptr_new[i] << std::endl;
 			}
 			rowptr_new[rows] = elem_num;
 
 			for (int i = 0; i < elem_num; i++) {
-				elements_new[i] = elements[i + colind[begin]];
-				colind_new[i] = colind[i + colind[begin]];
-				std:cout << "new colind: " << colind_new[i] << std::endl;
+				elements_new[i] = elements[i + rowptr[begin]];
+				colind_new[i] = colind[i + rowptr[begin]];
+				//std:cout << "new colind: " << colind_new[i] << std::endl;
 			}
 
 
@@ -65,17 +65,12 @@ namespace Reconstruction {
 
 		void Extract_row_dense(int row, int num_col, float* vec) {
 
-			//if (sizeof(vec) != sizeof(float) * num_col) {
-			//	std::cerr << "size of the vector must be: sizeof(float) * " << num_col << ", but it's  * " << (sizeof(vec) / sizeof(float));
-			//}
-
 			for (int i = 0; i < num_col; i++) {
 				vec[i] = 0;
 			}
 
 			for (int i = rowptr[row]; i < rowptr[row + 1]; i++) {
 				int tmp = colind[i];
-				std::cout << tmp << std::endl;
 				vec[colind[i]] = elements[i];
 			}
 

@@ -36,7 +36,7 @@
     <ClCompile Include="FBP.cpp">
       <Filter>ソース ファイル\Algorithm</Filter>
     </ClCompile>
-    <ClCompile Include="ReconstructionAlgorithm.cpp">
+    <ClCompile Include="IterationRec.cpp">
       <Filter>ソース ファイル\Algorithm</Filter>
     </ClCompile>
     <ClCompile Include="TV.cpp">
@@ -91,6 +91,9 @@
     </ClInclude>
     <ClInclude Include="SparseMatrix.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="IterationRec.h">
+      <Filter>ヘッダー ファイル\Algorithm</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

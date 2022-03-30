@@ -9,12 +9,12 @@
 
 namespace Reconstruction {
 	vector<string> splitstring(string& input, char delimiter);
-	float* add_array(float* a, float* b);
-	float* sub_array(float* a, float* b);
-	float* mul_array(float* a, float* b);
-	float* mul_array(float attenu, float* a);
-	float dot_array(float* a, float* b);
-	float sum_array(float* a);
+	void add_array(float* a, float* b, std::size_t length);
+	void sub_array(float* a, float* b, std::size_t length);
+	void mul_array1(float* a, float attenu, std::size_t length);
+	void mul_array2(float* a, float* b, std::size_t length);
+	float dot_array(float* a, float* b, std::size_t length);
+	float sum_array(float* a, std::size_t length);
 }
 
 

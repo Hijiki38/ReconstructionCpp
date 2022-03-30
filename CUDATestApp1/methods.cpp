@@ -1,4 +1,5 @@
 #include "methods.h"
+#include <stdexcept>
 
 namespace Reconstruction {
 	vector<string> splitstring(string& input, char delimiter) {
@@ -13,65 +14,47 @@ namespace Reconstruction {
 		return output;
 	}
 
-	float* add_array(float* a, float* b) {
-		if (sizeof(a) != sizeof(b)) {
-			std::cerr << "size of arrays must be same." << std::endl;
-			return NULL;
+	void add_array(float* a, float* b, std::size_t length) {
+
+		//float* result = (float*)malloc(sizeof(float) * length);
+
+		for (int i = 0; i < length; i++) {
+			a[i] = a[i] + b[i];
 		}
-		float* result = (float*)malloc(sizeof(a));
-		for (int i = 0; i < (sizeof(result) / sizeof(float)); i++) {
-			result[i] = a[i] + b[i];
-		}
-		return result;
 	}
 
-	float* sub_array(float* a, float* b) {
-		if (sizeof(a) != sizeof(b)) {
-			std::cerr << "size of arrays must be same." << std::endl;
-			return NULL;
+	void sub_array(float* a, float* b, std::size_t length) {
+		//float* result = (float*)malloc(sizeof(float) * length);
+		for (int i = 0; i < length; i++) {
+			a[i] = a[i] - b[i];
 		}
-		float* result = (float*)malloc(sizeof(a));
-		for (int i = 0; i < (sizeof(result) / sizeof(float)); i++) {
-			result[i] = a[i] - b[i];
-		}
-		return result;
 	}
 
-	float* mul_array(float* a, float* b) {
-		if (sizeof(a) != sizeof(b)) {
-			std::cerr << "size of arrays must be same." << std::endl;
-				return NULL;
+	void mul_array1(float*a, float attenu, std::size_t length) {
+		//float* result = (float*)malloc(sizeof(float) * length);
+		for (int i = 0; i < length; i++) {
+			a[i] = a[i] * attenu;
 		}
-		float* result = (float*)malloc(sizeof(a));
-		for (int i = 0; i < (sizeof(result) / sizeof(float)); i++) {
-			result[i] = a[i] * b[i];
-		}
-		return result;
 	}
 
-	float* mul_array(float attenu, float* a) {
-		float* result = (float*)malloc(sizeof(a));
-		for (int i = 0; i < (sizeof(result) / sizeof(float)); i++) {
-			result[i] = a[i] * attenu;
+	void mul_array2(float* a, float* b, std::size_t length) {
+		//float* result = (float*)malloc(sizeof(float) * length);
+		for (int i = 0; i < length; i++) {
+			a[i] = a[i] * b[i];
 		}
-		return result;
 	}
 
-	float dot_array(float* a, float* b) {
-		if (sizeof(a) != sizeof(b)) {
-			std::cerr << "size of arrays must be same." << std::endl;
-				return NULL;
-		}
+	float dot_array(float* a, float* b, std::size_t length) {
 		float result = 0;
-		for (int i = 0; i < (sizeof(a) / sizeof(float)); i++) {
+		for (int i = 0; i < length; i++) {
 			result += a[i] * b[i];
 		}
 		return result;
 	}
 
-	float sum_array(float *a) {
+	float sum_array(float *a, std::size_t length) {
 		float result = 0;
-		for (int i = 0; i < (sizeof(a) / sizeof(float)); i++) {
+		for (int i = 0; i < length; i++) {
 			result += a[i];
 		}
 		return result;

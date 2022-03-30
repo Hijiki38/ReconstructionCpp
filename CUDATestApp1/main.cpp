@@ -5,6 +5,7 @@
 #include <sstream>
 #include "ART.h"
 #include "MLEM.h"
+#include "IterationRec.h"
 #include "sinogram.h"
 #include "PCCTsinogram.h"
 #include "methods.h"
@@ -42,7 +43,10 @@ int main(int argc, char *argv[]) {
 	if (argc == 1) 
 	{
 		//inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sinogram_total_f32.csv";
+		// 
+		//inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_ball2.csv"; 
 		inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star360.csv";
+		
 		//inpath = "D:\\tmp\\10-30_f32_2.csv";
 		//inpath = "E:\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star.csv";
 	}
@@ -93,31 +97,19 @@ int main(int argc, char *argv[]) {
 	}
 	else if (mode == static_cast<int>(rec_name::ART)) 
 	{
-		art = new Reconstruction::ART(sg, &geo);
+		art = new Reconstruction::ART(pcsg, &geo);
 		std::cout << "\nactivate ART";
-		result = (*art).reconstruction(10,5);
-		//result = (*art).reconstruction(10);
+		resultvec = (*art).reconstruction(10, 5);
 
-		outvec.resize((*result).size());
-		VectorXf::Map(&outvec[0], (*result).size()) = (*result);
+		nd = (*pcsg).get_nd();
+		nv = (*pcsg).get_nv();
 
-		std::cout << "received vector:" << (*result)[0] << "," << (*result)[1] << "," << (*result)[2];
-
-
-		//ofstream ofs("E:\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\vsARToutput.csv");
-		ressize = (*result).size();
-		nd = (*sg).get_nd();
-		nv = (*sg).get_nv();
-
-		//std::cout << "outvec_len:" << outvec.size();
-
-		for (int i = 0; i < ressize / nd; i++)
+		for (int i = 0; i < nd; i++)
 		{
-			std::cout << "\r writing..  " << i << " / " << (ressize / nd) - 1;
+			std::cout << "\r writing..  " << i << " / " << nd - 1;
 			for (int j = 0; j < nd; j++)
 			{
-				//std::cout << count << "\n";
-				ofs << outvec[count] << ',';
+				ofs << resultvec[count] << ',';
 				count++;
 			}
 			ofs << '\n';
@@ -129,24 +121,22 @@ int main(int argc, char *argv[]) {
 		std::cout << "\nactivate MLEM";
 		resultvec = (*mlem).reconstruction(10, 5);
 
-		//ofstream ofs("E:\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\vsARToutput.csv");
 		nd = (*pcsg).get_nd();
 		nv = (*pcsg).get_nv();
-
-		//std::cout << "outvec_len:" << outvec.size();
 
 		for (int i = 0; i < nd; i++)
 		{
 			std::cout << "\r writing..  " << i << " / " << nd - 1;
 			for (int j = 0; j < nd; j++)
 			{
-				//std::cout << count << "\n";
-				ofs << outvec[count] << ',';
+				ofs << resultvec[count] << ',';
 				count++;
 			}
 			ofs << '\n';
 		}
 	}
+
+
 
 
 
