@@ -13,8 +13,8 @@ namespace Reconstruction {
 		Reconstruction::add_array(idiff, smr, size);
 	}
 
-	void ART::calc_attenu(float* atn, float* idiff, float par, int size) const {
-		Reconstruction::mul_array1(idiff, par, size);
+	void ART::calc_attenu(float* atn, float* idiff, int size) const {
+		Reconstruction::mul_array1(idiff, (relpar / block_size), size);
 		Reconstruction::sub_array(atn, idiff, size); //ART:  attenu = attenu - (relpar / block_num) * imgdiff;
 	}
 }

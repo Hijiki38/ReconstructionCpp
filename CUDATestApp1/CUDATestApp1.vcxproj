@@ -187,6 +187,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ART.h" />
+    <ClInclude Include="CalcSysmat.cuh" />
     <ClInclude Include="consts.h" />
     <ClInclude Include="geometry.h" />
     <ClInclude Include="MLEM.h" />
@@ -197,6 +198,9 @@
     <ClInclude Include="SparseMatrix.h" />
     <ClInclude Include="TV.h" />
     <ClInclude Include="methods.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="CalcSysmat.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

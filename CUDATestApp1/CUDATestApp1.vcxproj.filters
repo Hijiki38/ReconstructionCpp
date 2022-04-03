@@ -95,6 +95,9 @@
     <ClInclude Include="IterationRec.h">
       <Filter>ヘッダー ファイル\Algorithm</Filter>
     </ClInclude>
+    <ClInclude Include="CalcSysmat.cuh">
+      <Filter>ヘッダー ファイル\Algorithm</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Eigen\Cholesky" />
@@ -127,5 +130,10 @@
     <None Include="Eigen\SuperLUSupport" />
     <None Include="Eigen\SVD" />
     <None Include="Eigen\UmfPackSupport" />
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="CalcSysmat.cu">
+      <Filter>ソース ファイル\Algorithm</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

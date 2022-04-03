@@ -21,7 +21,7 @@ namespace Reconstruction {
 
 		bool block = true;
 
-		sysmat = *(generate_sysmat());
+		sysmat = *(generate_sysmat(true,false));
 
 		cout << "\nStart iteration";
 
@@ -47,7 +47,7 @@ namespace Reconstruction {
 						//imgdiff = imgdiff + ((sys_atn - _sino[i * block_num + j]) / sys_sys) * _sysmatrow;
 					}
 
-					calc_attenu(attenu, imgdiff, (relpar / block_size), nd * nd);
+					calc_attenu(attenu, imgdiff, nd * nd);
 					//attenu = attenu - (relpar / block_num) * imgdiff;
 
 				}
@@ -73,12 +73,7 @@ namespace Reconstruction {
 		Reconstruction::add_array(idiff, smr, size);
 	}
 
-	//void IterationRec::calc_attenu(float* atn, float* idiff, float par, int size) {
-	//	Reconstruction::mul_array(idiff, par, size);
-	//	Reconstruction::sub_array(atn, idiff, size); //ART
-	//}
-
-	std::unique_ptr<SparseMatrix> IterationRec::generate_sysmat(bool write_sysmat) {
+	std::unique_ptr<SparseMatrix> IterationRec::generate_sysmat(bool use_gpu, bool write_sysmat) {
 		int center;
 		float relx = 0;
 		float rely = 0;
@@ -101,6 +96,8 @@ namespace Reconstruction {
 		int* rowptr = (int*)malloc(sizeof(int) * (nd * nv + 1));		//indices of the first nonzero element in each row
 		int* colind = (int*)malloc(sizeof(int) * MAXMATERIALS);		//the column indices of the corresponding elements
 		int nonzero = 0;		//the number of nonzero elements
+
+		float* tmpmat_gpu = (float*)malloc(sizeof(float) * nd * nd);
 
 		ofstream ofs("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sysmat.csv"); //for debug
 
@@ -126,48 +123,88 @@ namespace Reconstruction {
 
 			for (int w = 0; w < nd; w++)
 			{
-				firstelem = true;
-				for (int y = 0; y < nd; y++)
-				{
-					for (int x = 0; x < nd; x++)
+				if (use_gpu) {
+					Reconstruction::calc_sysmat(tmpmat_gpu, nd, center, w, theta, geometry_normalized->sdd, rotatecount);
+
+					firstelem = true;
+					for (int y = 0; y < nd; y++)
 					{
-						//theta = 0;
-						point_abs.set_xy(x, y);
-						for (int i = 0; i < rotatecount; i++) {
-							point_abs.rotate90();
-						}
-						//point_abs.rotate90(rotatecount);
-						relx = point_abs.get_relative(point_abs.get_x());
-						rely = point_abs.get_relative(point_abs.get_inverted(point_abs.get_y()));
-
-						offset_detector = (nd - w - 1 - center + 0.5) / cos(theta); //offset of the detector
-						if (geometry_normalized->is_conebeam)
+						for (int x = 0; x < nd; x++)
 						{
-							//offset_detector_relative = offset_detector * (geometry_normalized->sod + relx) / geometry_normalized->sdd;
-							phi = atan2f(offset_detector, geometry_normalized->sdd);
-						}
-						else {
-							phi = 0;
-						}
-
-						intercept_Y = offset_detector - rely + relx * tan(theta + phi);
-
-						area = calc_area(intercept_Y, offset_detector, theta);
-						if (area != 0) {
-							elements[nonzero] = area;
-							colind[nonzero] = nd * y + x;
-							if (firstelem) {
-								rowptr[nd * v + w] = nonzero;
-								firstelem = false;
+							area = tmpmat_gpu[y * nd + x];
+							if (area != 0) {
+								if (nonzero == MAXMATERIALS - 1) {
+									std::cout << "System matrix is too big!";
+									exit(1);
+								}
+								elements[nonzero] = area;
+								colind[nonzero] = nd * y + x;
+								if (firstelem) {
+									rowptr[nd * v + w] = nonzero;
+									firstelem = false;
+								}
+								nonzero++;
 							}
-							nonzero++;
-						}
 
-						if (write_sysmat) {
-							ofs << area << ", ";
+							if (write_sysmat) {
+								ofs << area << ", ";
+							}
 						}
 					}
 				}
+				else {
+					firstelem = true;
+					for (int y = 0; y < nd; y++)
+					{
+						for (int x = 0; x < nd; x++)
+						{
+							//theta = 0;
+							point_abs.set_xy(x, y);
+							for (int i = 0; i < rotatecount; i++) {
+								point_abs.rotate90();
+							}
+							//point_abs.rotate90(rotatecount);
+							relx = point_abs.get_relative(point_abs.get_x());
+							rely = point_abs.get_relative(point_abs.get_inverted(point_abs.get_y()));
+
+							offset_detector = (nd - w - 1 - center + 0.5) / cos(theta); //offset of the detector
+							if (geometry_normalized->is_conebeam)
+							{
+								//offset_detector_relative = offset_detector * (geometry_normalized->sod + relx) / geometry_normalized->sdd;
+								phi = atan2f(offset_detector, geometry_normalized->sdd);
+								intercept_Y = offset_detector - rely + relx * tan(theta + phi);
+								area = calc_area_cbct(intercept_Y, offset_detector, theta);
+							}
+							else {
+								phi = 0;
+								intercept_Y = offset_detector - rely + relx * tan(theta + phi);
+								area = calc_area(intercept_Y, offset_detector, theta);
+							}
+
+							//intercept_Y = offset_detector - rely + relx * tan(theta + phi);
+
+							area = calc_area(intercept_Y, offset_detector, theta);
+							if (area != 0) {
+								if (nonzero == MAXMATERIALS - 1) {
+									std::cout << "System matrix is too big!";
+									exit(1);
+								}
+								elements[nonzero] = area;
+								colind[nonzero] = nd * y + x;
+								if (firstelem) {
+									rowptr[nd * v + w] = nonzero;
+									firstelem = false;
+								}
+								nonzero++;
+							}
+
+							if (write_sysmat) {
+								ofs << area << ", ";
+							}
+						}
+					}
+				}
+				
 
 				if (write_sysmat) {
 					ofs << "\n";
@@ -190,14 +227,12 @@ namespace Reconstruction {
 
 	float IterationRec::calc_area(float intercept, float detectoroffset, float angle) {
 		float la1, la2, lb1, lb2, sa, sb;
-		float a = 0.5;
+		float a = 0.5; //pixelsize / 2
 
 		la1 = a - (-a * tan(angle) + intercept + a / cos(angle));
 		la2 = a - (a * tan(angle) + intercept + a / cos(angle));
 		lb1 = a + (-a * tan(angle) + intercept - a / cos(angle));
 		lb2 = a + (a * tan(angle) + intercept - a / cos(angle));
-
-
 
 		sa = _calc_subarea(la1, la2, a);
 		sb = _calc_subarea(lb1, lb2, a);

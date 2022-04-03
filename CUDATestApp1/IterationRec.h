@@ -10,9 +10,10 @@
 #include "geometry.h"
 #include "SparseMatrix.h"
 #include "methods.h"
+#include "CalcSysmat.cuh"
 
 
-static const int MAXMATERIALS = 5000000;
+static const int MAXMATERIALS = 250000000;
 extern const double PI;
 
 namespace Reconstruction {
@@ -20,17 +21,14 @@ namespace Reconstruction {
 
 
 	class IterationRec {
-	private:
-		//int n_detector, n_view, n_bin;
+	protected:
 		Reconstruction::PCCTsinogram* sino;
 
 		SparseMatrix sysmat;
-		float* attenu, * imgdiff;// , * imgdiff_tv;
-		//float* img_result;
-		//float* proj_original;
+		float* attenu, * imgdiff;
 
-		float relpar = 1.05;
-		float relpard = 0.01;
+		float relpar;// = 1.05;
+		//float relpard = 0.01;
 
 		int block_size;
 
@@ -38,7 +36,9 @@ namespace Reconstruction {
 
 
 	public:
-		IterationRec(Reconstruction::PCCTsinogram* s, Reconstruction::geometry* geometry) {
+		IterationRec(Reconstruction::PCCTsinogram* s, Reconstruction::geometry* geometry, float par) {
+
+			relpar = par;
 
 			sino = s;
 
@@ -63,17 +63,17 @@ namespace Reconstruction {
 			imgdiff = (float*)malloc(n_detector * n_detector * n_bin * sizeof(float));
 
 			for (int i = 0; i < n_detector * n_detector * n_bin; i++) {
-				attenu[i] = 0;
+				attenu[i] = 1;
 				imgdiff[i] = 0;
 			}
 		}
 
 		float* reconstruction(int itr, int tvitr = -1);
 
-		std::unique_ptr<SparseMatrix> generate_sysmat(bool write_sysmat = false);
+		std::unique_ptr<SparseMatrix> generate_sysmat(bool use_gpu = false, bool write_sysmat = false);
 
 		virtual void calc_imgdiff(float* idiff, float* smr, float* atn, float sn, int size) const;
-		virtual void calc_attenu(float* atn, float* idiff, float par, int size) const = 0;
+		virtual void calc_attenu(float* atn, float* idiff, int size) const = 0;
 
 		float calc_area(float intercept, float detectoroffset, float angle);
 		float calc_area_cbct(float intercept, float detectoroffset, float angle);

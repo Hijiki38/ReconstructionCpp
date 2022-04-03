@@ -24,7 +24,8 @@ int main(int argc, char *argv[]) {
 	int mode;
 	int count=0;
 	string inpath;
-	Reconstruction::geometry geo = {false, 205.7, 1100.0, -0.9345, 0.01869};
+	//Reconstruction::geometry geo = {true, 205.7, 1100.0, -0.9345, 0.01869}; //sod, sdd, cor, pixsize
+	Reconstruction::geometry geo = { false, 400.0, 800.0, 0, 0.05 };
 	Reconstruction::sinogram* sg;
 	Reconstruction::PCCTsinogram* pcsg;
 	Reconstruction::ART* art;
@@ -36,7 +37,7 @@ int main(int argc, char *argv[]) {
 	int ressize;
 	int nd;
 	int nv;
-	ofstream ofs("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\vsARToutput.csv");
+	
 
 
 	std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|R|E|C|O|N|S|T|R|U|C|T|O|R|\n+-+-+-+-+-+-+-+-+-+-+-+-+-+";
@@ -97,6 +98,8 @@ int main(int argc, char *argv[]) {
 	}
 	else if (mode == static_cast<int>(rec_name::ART)) 
 	{
+		ofstream ofs("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\vsARToutput.csv");
+
 		art = new Reconstruction::ART(pcsg, &geo);
 		std::cout << "\nactivate ART";
 		resultvec = (*art).reconstruction(10, 5);
@@ -117,6 +120,8 @@ int main(int argc, char *argv[]) {
 	}
 	else if (mode == static_cast<int>(rec_name::MLEM))
 	{
+		ofstream ofs("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\vsMLEMoutput.csv");
+
 		mlem = new Reconstruction::MLEM(pcsg, &geo);
 		std::cout << "\nactivate MLEM";
 		resultvec = (*mlem).reconstruction(10, 5);
