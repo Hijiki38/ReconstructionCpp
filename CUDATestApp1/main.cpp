@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
 	int nd;
 	int nv;
 	
-
+	int debugmode = 1; //-1:disable, 0,1,2...:reconstruction mode
 
 	std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|R|E|C|O|N|S|T|R|U|C|T|O|R|\n+-+-+-+-+-+-+-+-+-+-+-+-+-+";
 	if (argc == 1) 
@@ -75,20 +75,26 @@ int main(int argc, char *argv[]) {
 
 	std::cout << "\nread sinogram completed. d, v =" << (*pcsg).get_nd() << ", " << (*pcsg).get_nv();
 	std::cout << "\nInput reconstruction mode: (0:FBP, 1:ART, 2;MLEM)";
-	while (1) 
-	{
-		std::cin >> mode;
-		if (mode == static_cast<int>(rec_name::FBP)
-			|| mode == static_cast<int>(rec_name::ART)
-			|| mode == static_cast<int>(rec_name::MLEM))
+	if (debugmode == -1) {
+		while (1)
 		{
-			break;
-		}
-		else 
-		{
-			std::cout << "Undefined value.";
+			std::cin >> mode;
+			if (mode == static_cast<int>(rec_name::FBP)
+				|| mode == static_cast<int>(rec_name::ART)
+				|| mode == static_cast<int>(rec_name::MLEM))
+			{
+				break;
+			}
+			else
+			{
+				std::cout << "Undefined value.";
+			}
 		}
 	}
+	else {
+		mode = debugmode;
+	}
+
 
 	if (mode == static_cast<int>(rec_name::FBP)) 
 	{

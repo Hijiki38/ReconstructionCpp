@@ -29,7 +29,8 @@ namespace Reconstruction {
 		float la1, la2, lb1, lb2, sa, sb;
 		float a = 0.5; // = pixsize / 2
 		float tan_angle;
-		float tan_delta = a / sdd;
+		//float tan_delta = a / sdd;
+		float tan_delta = 0;
 
 		if (ix < nd && iy < nd) {
 			for (int i = 0; i < rotcount; i++) {
@@ -43,7 +44,8 @@ namespace Reconstruction {
 			rely = center - rely - 0.5;
 
 			offset_detector = (nd - w - 1 - center + 0.5) / cosf(theta); //offset of the detector
-			phi = atan2f(offset_detector, sdd);
+			//phi = atan2f(offset_detector, sdd);
+			phi = 0;
 
 			tan_angle = tanf(theta + phi);
 			intercept = offset_detector - rely + relx * tan_angle;
@@ -143,8 +145,112 @@ namespace Reconstruction {
 		cudaDeviceReset();
 
 		return;
+	}
+
+	int calc_sysmat2(float* elem, int* rowptr, int* colind, const int nv, const int nd, const int center, const int sdd) {
+
+		float area = 0;
+		float theta = 0;
+		int rotatecount = 0;
+		bool firstelem = true;
+
+		int nonzero = 0;
+		float* tmpmat = (float*)malloc(sizeof(float) * nd * nd);
+
+		FILE* fp;
+
+		fp = fopen("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sysmatgpu.csv", "w");
 
 
+		int dev = 0;
+		cudaDeviceProp deviceprop;
+		CHECK(cudaGetDeviceProperties(&deviceprop, dev));
+		CHECK(cudaSetDevice(dev));
+
+		int nxy = nd * nd;
+		int nBytes = nxy * sizeof(float);
+
+		float* d_res;
+		CHECK(cudaMalloc((void**)&d_res, nBytes));
+
+		//CHECK(cudaMemcpy(d_res, tmpmat, nBytes, cudaMemcpyHostToDevice));
+
+		int dimx = 32;
+		int dimy = 32;
+		dim3 block(dimx, dimy);
+		dim3 grid((nd + block.x - 1) / block.x, (nd + block.y - 1) / block.y);
+
+		char str[100000];
+		char buf[24];
+
+		str[0] = '\0';
+
+		for (int v = 0; v < nv; v++)
+		{
+
+			printf("\r%d / %d", v, nv);
+
+			if (theta >= PI / 4)
+			{ //“Š‰eŠp‚ª45“x‚ð’´‚¦‚½‚ç‰æ‘œ‚ð90“x‰E‰ñ“]‚³‚¹“Š‰eŠp‚ð - 45“x‚É
+				rotatecount++;
+				theta -= PI / 2;
+			}
+
+			for (int w = 0; w < nd; w++)
+			{
+
+				double iStart = cpuSecond();
+				calc_coeff_cbct << < grid, block >> > (d_res, nd, center, w, theta, sdd, rotatecount);
+				CHECK(cudaDeviceSynchronize());
+				double iElaps = cpuSecond() - iStart;
+
+				CHECK(cudaGetLastError());
+				CHECK(cudaMemcpy(tmpmat, d_res, nBytes, cudaMemcpyDeviceToHost));
+
+				//printf("Elapsed: %lf [s] \n", iElaps);
+
+				firstelem = true;
+
+				//printf("hoge");
+				str[0] = '\0';
+
+				for (int y = 0; y < nd; y++)
+				{
+					for (int x = 0; x < nd; x++)
+					{
+						area = tmpmat[y * nd + x];
+						if (area != 0) {
+							//if (nonzero == MAXMATERIALS - 1) {
+							//	exit(1);
+							//}
+							elem[nonzero] = area;
+							colind[nonzero] = nd * y + x;
+							if (firstelem) {
+								rowptr[nd * v + w] = nonzero;
+								firstelem = false;
+							}
+							nonzero++;
+						}
+						snprintf(buf, 24, "%f,", area);
+						strcat(str, buf);
+						//fprintf(fp, "%f", area);
+					}
+				}
+
+				strcat(str, "\n");
+				fprintf(fp, str);
+
+			}
+
+			theta += 2 * PI / nv;
+		}
+
+		CHECK(cudaFree(d_res));
+		cudaDeviceReset();
+
+		fclose(fp);
+
+		return nonzero;
 	}
 
 	double cpuSecond() {
