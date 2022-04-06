@@ -14,6 +14,96 @@
 
 namespace Reconstruction {
 
+	__global__ void calc_coeff(float* result, const int nd, const int center,
+		const int w, const int theta, const int sdd, const int rotcount) {
+
+		unsigned int ix = blockDim.x * blockIdx.x + threadIdx.x;
+		unsigned int iy = blockDim.y * blockIdx.y + threadIdx.y;
+		unsigned int idx = iy * nd + ix;
+
+		float relx = ix;
+		float rely = iy;
+		float tmp_x;
+		float offset_detector, intercept;
+
+		float la1, la2, lb1, lb2, sa, sb;
+		float a = 0.5; // = pixsize / 2
+
+
+		if (ix < nd && iy < nd) {
+			for (int i = 0; i < rotcount; i++) {
+				tmp_x = relx;
+				relx = 2 * center - rely - 1;
+				rely = tmp_x;
+			}
+			//float point::get_relative(float _num) { return _num - center + 0.5; }
+
+			relx = relx - center + 0.5;
+			rely = center - rely - 0.5;
+
+			offset_detector = (nd - w - 1 - center + 0.5) / cosf(theta); //offset of the detector
+			intercept = offset_detector - rely + relx * tan_angle;
+
+			la1 = a - (-a * tan(angle) + intercept + a / cosf(angle));
+			la2 = a - (a * tan(angle) + intercept + a / cosf(angle));
+			lb1 = a + (-a * tan(angle) + intercept - a / cosf(angle));
+			lb2 = a + (a * tan(angle) + intercept - a / cosf(angle));
+
+			if (la1 < 0) {
+				if (la2 < 0) {
+					sa = 0;
+				}
+				else {
+					sa = a * la2 * la2 / (-la1 + la2);
+				}
+			}
+			else if (la1 < 2 * a) {
+				if (la2 < 0) {
+					sa = a * la1 * la1 / (la1 - la2);
+				}
+				else if (la2 < 2 * a) {
+					sa = a * (la1 + la2);
+				}
+			}
+			else {
+				if (la2 < 2 * a) {
+					sa = a * (la1 + la2) - (la1 - 2 * a) * (la1 - 2 * a) / (2 * (la1 - la2));
+				}
+				else {
+					sa = (2 * a) * (2 * a);
+				}
+			}
+
+			if (lb1 < 0) {
+				if (lb2 < 0) {
+					sb = 0;
+				}
+				else {
+					sb = a * lb2 * lb2 / (-lb1 + lb2);
+				}
+			}
+			else if (lb1 < 2 * a) {
+				if (lb2 < 0) {
+					sb = a * lb1 * lb1 / (lb1 -lb2);
+				}
+				else if (lb2 < 2 * a) {
+					sb = a * (lb1 + lb2);
+				}
+			}
+			else {
+				if (lb2 < 2 * a) {
+					sb = a * (lb1 + lb2) - (lb1 - 2 * a) * (lb1 - 2 * a) / (2 * (lb1 - lb2));
+				}
+				else {
+					sb = (2 * a) * (2 * a);
+				}
+			}
+
+			result[idx] = (2 * a) * (2 * a) - (sa + sb);
+		}
+	}
+
+
 	__global__ void calc_coeff_cbct(float* result, const int nd, const int center,
 		const int w, const int theta, const int sdd, const int rotcount) {
 
@@ -29,8 +119,7 @@ namespace Reconstruction {
 		float la1, la2, lb1, lb2, sa, sb;
 		float a = 0.5; // = pixsize / 2
 		float tan_angle;
-		//float tan_delta = a / sdd;
-		float tan_delta = 0;
+		float tan_delta = a / sdd;
 
 		if (ix < nd && iy < nd) {
 			for (int i = 0; i < rotcount; i++) {
@@ -44,8 +133,7 @@ namespace Reconstruction {
 			rely = center - rely - 0.5;
 
 			offset_detector = (nd - w - 1 - center + 0.5) / cosf(theta); //offset of the detector
-			//phi = atan2f(offset_detector, sdd);
-			phi = 0;
+			phi = atan2f(offset_detector, sdd);
 
 			tan_angle = tanf(theta + phi);
 			intercept = offset_detector - rely + relx * tan_angle;
