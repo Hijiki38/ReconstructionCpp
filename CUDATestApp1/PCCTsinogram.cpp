@@ -46,4 +46,12 @@ namespace Reconstruction {
 
 		return sino;
 	}
+
+	void PCCTsinogram::convert_negativelog() {
+		int size = get_nd() * get_nv() * get_ne();
+		float* a = get_sinovec();
+		for (int i = 0; i < size; i++) {
+			a[i] = -1 * std::log(a[i]);
+		}
+	}
 }

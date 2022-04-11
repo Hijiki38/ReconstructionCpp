@@ -43,10 +43,11 @@ int main(int argc, char *argv[]) {
 	std::cout << "+-+-+-+-+-+-+-+-+-+-+-+-+-+\n|R|E|C|O|N|S|T|R|U|C|T|O|R|\n+-+-+-+-+-+-+-+-+-+-+-+-+-+";
 	if (argc == 1) 
 	{
+		//inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\margedsinogram10.csv";
+		//inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\fourmetal10.csv";
 		//inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sinogram_total_f32.csv";
-		// 
 		//inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_ball2.csv"; 
-		inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star360.csv";
+		inpath = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star.csv";
 		
 		//inpath = "D:\\tmp\\10-30_f32_2.csv";
 		//inpath = "E:\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sino_star.csv";
@@ -72,6 +73,8 @@ int main(int argc, char *argv[]) {
 		"Can not read sinogram file!";
 		return 1;
 	}
+
+	pcsg->convert_negativelog();  //convert sinogram to negative log
 
 	std::cout << "\nread sinogram completed. d, v =" << (*pcsg).get_nd() << ", " << (*pcsg).get_nv();
 	std::cout << "\nInput reconstruction mode: (0:FBP, 1:ART, 2;MLEM)";

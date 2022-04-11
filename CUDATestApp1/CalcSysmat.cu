@@ -14,20 +14,36 @@
 
 namespace Reconstruction {
 
-	__global__ void calc_coeff(float* result, const int nd, const int center,
-		const int w, const int theta, const int sdd, const int rotcount) {
+	__global__ void calc_coeff_test(float* result, const int nd, const int center,
+		const int w, const float theta, const float sdd, const int rotcount) {
 
 		unsigned int ix = blockDim.x * blockIdx.x + threadIdx.x;
 		unsigned int iy = blockDim.y * blockIdx.y + threadIdx.y;
 		unsigned int idx = iy * nd + ix;
 
-		float relx = ix;
-		float rely = iy;
+		if (ix < nd && iy < nd) {
+			result[idx] = 0;
+		}
+
+	}
+
+
+	__global__ void calc_coeff(float* result, const int nd, const int center,
+		const int w, const float theta, const float sdd, const int rotcount) {
+
+		unsigned int ix = blockDim.x * blockIdx.x + threadIdx.x;
+		unsigned int iy = blockDim.y * blockIdx.y + threadIdx.y;
+		unsigned int idx = iy * nd + ix;
+
+		float relx = (float)ix;
+		float rely = (float)iy;
 		float tmp_x;
 		float offset_detector, intercept;
 
 		float la1, la2, lb1, lb2, sa, sb;
 		float a = 0.5; // = pixsize / 2
+		float tan_angle = tanf(theta);
+		float cos_angle = cosf(theta);
 
 
 		if (ix < nd && iy < nd) {
@@ -44,10 +60,10 @@ namespace Reconstruction {
 			offset_detector = (nd - w - 1 - center + 0.5) / cosf(theta); //offset of the detector
 			intercept = offset_detector - rely + relx * tan_angle;
 
-			la1 = a - (-a * tan(angle) + intercept + a / cosf(angle));
-			la2 = a - (a * tan(angle) + intercept + a / cosf(angle));
-			lb1 = a + (-a * tan(angle) + intercept - a / cosf(angle));
-			lb2 = a + (a * tan(angle) + intercept - a / cosf(angle));
+			la1 = a - (-a * tan_angle + intercept + a / cos_angle);
+			la2 = a - (a * tan_angle + intercept + a / cos_angle);
+			lb1 = a + (-a * tan_angle + intercept - a / cos_angle);
+			lb2 = a + (a * tan_angle + intercept - a / cos_angle);
 
 			if (la1 < 0) {
 				if (la2 < 0) {
@@ -63,6 +79,9 @@ namespace Reconstruction {
 				}
 				else if (la2 < 2 * a) {
 					sa = a * (la1 + la2);
+				}
+				else {
+					sa = a * (la1 + la2) - (la2 - 2 * a) * (la2 - 2 * a) / (2 * (la2 - la1));
 				}
 			}
 			else {
@@ -89,6 +108,9 @@ namespace Reconstruction {
 				else if (lb2 < 2 * a) {
 					sb = a * (lb1 + lb2);
 				}
+				else {
+					sb = a * (lb1 + lb2) - (lb2 - 2 * a) * (lb2 - 2 * a) / (2 * (lb2 - lb1));
+				}
 			}
 			else {
 				if (lb2 < 2 * a) {
@@ -105,7 +127,7 @@ namespace Reconstruction {
 
 
 	__global__ void calc_coeff_cbct(float* result, const int nd, const int center,
-		const int w, const int theta, const int sdd, const int rotcount) {
+		const int w, const float theta, const float sdd, const int rotcount) {
 
 		unsigned int ix = blockDim.x * blockIdx.x + threadIdx.x;
 		unsigned int iy = blockDim.y * blockIdx.y + threadIdx.y;
@@ -158,6 +180,9 @@ namespace Reconstruction {
 				else if (la2 < 2 * a) {
 					sa = a * (la1 + la2);
 				}
+				else {
+					sa = a * (la1 + la2) - (la2 - 2 * a) * (la2 - 2 * a) / (2 * (la2 - la1));
+				}
 			}
 			else {
 				if (la2 < 2 * a) {
@@ -178,10 +203,13 @@ namespace Reconstruction {
 			}
 			else if (lb1 < 2 * a) {
 				if (lb2 < 0) {
-					sb = a * lb1 * lb1 / (lb1 -lb2);
+					sb = a * lb1 * lb1 / (lb1 - lb2);
 				}
 				else if (lb2 < 2 * a) {
 					sb = a * (lb1 + lb2);
+				}
+				else {
+					sb = a * (lb1 + lb2) - (lb2 - 2 * a) * (lb2 - 2 * a) / (2 * (lb2 - lb1));
 				}
 			}
 			else {
@@ -197,45 +225,15 @@ namespace Reconstruction {
 		}
 	}
 
-	void calc_sysmat(float* result, const int nd, const int center,
-		const int w, const int theta, const int sdd, const int rotcount) {
+	void deviceinit() {
 
-		int dev = 0;
-		cudaDeviceProp deviceprop;
-		CHECK(cudaGetDeviceProperties(&deviceprop, dev));
-		CHECK(cudaSetDevice(dev));
-
-		int nxy = nd * nd;
-		int nBytes = nxy * sizeof(float);
-
-		float* d_res;
-		CHECK(cudaMalloc((void**)&d_res, nBytes));
-
-		CHECK(cudaMemcpy(d_res, result, nBytes, cudaMemcpyHostToDevice));
-
-		int dimx = 32;
-		int dimy = 32;
-		dim3 block(dimx, dimy);
-		dim3 grid((nd + block.x - 1) / block.x, (nd + block.y - 1) / block.y);
-
-		double iStart = cpuSecond();
-		calc_coeff_cbct << < grid, block >> > (d_res, nd, center, w, theta, sdd, rotcount);
-		CHECK(cudaDeviceSynchronize());
-		double iElaps = cpuSecond() - iStart;
-
-		CHECK(cudaGetLastError());
-		CHECK(cudaMemcpy(result, d_res, nBytes, cudaMemcpyDeviceToHost));
-
-		CHECK(cudaFree(d_res));
-
-		//printf("Elapsed: %lf [s] \n", iElaps);
-
-		cudaDeviceReset();
-
-		return;
 	}
 
-	int calc_sysmat2(float* elem, int* rowptr, int* colind, const int nv, const int nd, const int center, const int sdd) {
+	void devicereset() {
+		CHECK(cudaDeviceReset());
+	}
+
+	int calc_sysmat(float* elem, int* rowptr, int* colind, const int nv, const int nd, const int center, const float sdd, const bool write_sysmat) {
 
 		float area = 0;
 		float theta = 0;
@@ -244,10 +242,6 @@ namespace Reconstruction {
 
 		int nonzero = 0;
 		float* tmpmat = (float*)malloc(sizeof(float) * nd * nd);
-
-		FILE* fp;
-
-		fp = fopen("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sysmatgpu.csv", "w");
 
 
 		int dev = 0;
@@ -319,14 +313,9 @@ namespace Reconstruction {
 							}
 							nonzero++;
 						}
-						snprintf(buf, 24, "%f,", area);
-						strcat(str, buf);
-						//fprintf(fp, "%f", area);
+
 					}
 				}
-
-				strcat(str, "\n");
-				fprintf(fp, str);
 
 			}
 
@@ -334,9 +323,156 @@ namespace Reconstruction {
 		}
 
 		CHECK(cudaFree(d_res));
-		cudaDeviceReset();
+		CHECK(cudaDeviceReset());
 
-		fclose(fp);
+
+		return nonzero;
+	}
+
+	int calc_sysmat2(float* elem, int* rowptr, int* colind, const int v_start, const int v_size, const int nd, const int center, const float sdd, const bool init, const bool write_sysmat) {
+
+		float area = 0;
+		float theta = 0;
+		int rotatecount = 0;
+		bool firstelem = true;
+
+		int nonzero = 0;
+		float* tmpmat = (float*)malloc(sizeof(float) * nd * nd);
+
+		if (write_sysmat) {
+			FILE* fp;
+			fp = fopen("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sysmatgpu.csv", "w");
+		}
+
+		if (init) {
+			int dev = 0;
+			cudaDeviceProp deviceprop;
+			CHECK(cudaGetDeviceProperties(&deviceprop, dev));
+			CHECK(cudaSetDevice(dev));
+		}
+
+
+		int nxy = nd * nd;
+		int nBytes = nxy * sizeof(float);
+
+		float* d_res;
+		CHECK(cudaMalloc((void**)&d_res, nBytes));
+
+		int dimx = 32;
+		int dimy = 32;
+		dim3 block(dimx, dimy);
+		dim3 grid((nd + block.x - 1) / block.x, (nd + block.y - 1) / block.y);
+
+		//char str[100000];
+		//char buf[24];
+
+		//str[0] = '\0';
+
+
+
+		for (int i = 0; i < v_start; i++) {
+			if (theta >= PI / 4)
+			{ //“Š‰eŠp‚ª45“x‚ð’´‚¦‚½‚ç‰æ‘œ‚ð90“x‰E‰ñ“]‚³‚¹“Š‰eŠp‚ð - 45“x‚É
+				rotatecount++;
+				theta -= PI / 2;
+			}
+			theta += 2 * PI / (v_start + v_size);
+		}
+
+		for (int v = v_start; v < v_start + v_size; v++)
+		{
+
+			printf("\r%d / %d to %d  (theta: %f)", v, v_start, v_start + v_size, theta);
+
+			if (theta >= PI / 4)
+			{ //“Š‰eŠp‚ª45“x‚ð’´‚¦‚½‚ç‰æ‘œ‚ð90“x‰E‰ñ“]‚³‚¹“Š‰eŠp‚ð - 45“x‚É
+				rotatecount++;
+				theta -= PI / 2;
+			}
+
+			for (int w = 0; w < nd; w++)
+			{
+
+				//double iStart = cpuSecond();
+				//calc_coeff << < grid, block >> > (d_res, nd, center, w, theta, sdd, rotatecount);
+				//printf("\ncalling kernel");
+				calc_coeff << < grid, block >> > (d_res, nd, center, w, theta, sdd, rotatecount);
+				//printf("... finished\n");
+				CHECK(cudaDeviceSynchronize());
+				//printf("... finished\n");
+				//double iElaps = cpuSecond() - iStart;
+
+				CHECK(cudaGetLastError());
+
+				//printf("\n cudaMemcpy: %d", w);
+				CHECK(cudaMemcpy(tmpmat, d_res, nBytes, cudaMemcpyDeviceToHost));
+				//printf("... finished\n");
+				
+				//printf("Elapsed: %lf [s] \n", iElaps);
+
+				firstelem = true;
+
+				//printf("hoge");
+				//if (write_sysmat) {
+				//	str[0] = '\0';
+				//}
+
+				//printf("\n convert to spmat");
+
+				for (int y = 0; y < nd; y++)
+				{
+					for (int x = 0; x < nd; x++)
+					{
+						area = tmpmat[y * nd + x];
+						if (area != 0) {
+							//if (nonzero == MAXMATERIALS - 1) {
+							//	exit(1);
+							//}
+							elem[nonzero] = area;
+							colind[nonzero] = nd * y + x;
+							if (firstelem) {
+								rowptr[nd * v + w] = nonzero;
+								firstelem = false;
+							}
+							nonzero++;
+						}
+						//if (write_sysmat) {
+						//	snprintf(buf, 24, "%f,", area);
+						//	strcat(str, buf);
+						//}
+					}
+				}
+
+				//printf("... finished\n");
+
+				//if (write_sysmat) {
+				//	strcat(str, "\n");
+				//	fprintf(fp, str);
+				//}
+
+
+			}
+
+			theta += 2 * PI / (v_start + v_size);
+		}
+
+		//printf("\ncudafree\n");
+		CHECK(cudaFree(d_res));
+		//printf("... finished\n");
+		//printf("\ncudadevicereset\n");
+		//CHECK(cudaDeviceReset());
+		//printf("... finished\n");
+
+		//if (write_sysmat) {
+		//	fclose(fp);
+		//}
+
+		// for debug
+		//exit(0);
+
+		//printf("\nfree tmpmat\n");
+		free(tmpmat);
+		//printf("... finished\n");
 
 		return nonzero;
 	}

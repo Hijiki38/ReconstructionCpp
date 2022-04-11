@@ -5,7 +5,7 @@ namespace Reconstruction {
 		bool is_conebeam = false;
 		float sod = 0;
 		float sdd = 0;
-		float axis_correction = 0;
+		float axiscor_pixels = 0;
 		float pixelsize = 0;
 	};
 }

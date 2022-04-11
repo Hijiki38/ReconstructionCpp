@@ -15,30 +15,24 @@ namespace Reconstruction {
 	}
 
 	void add_array(float* a, float* b, std::size_t length) {
-
-		//float* result = (float*)malloc(sizeof(float) * length);
-
 		for (int i = 0; i < length; i++) {
 			a[i] = a[i] + b[i];
 		}
 	}
 
 	void sub_array(float* a, float* b, std::size_t length) {
-		//float* result = (float*)malloc(sizeof(float) * length);
 		for (int i = 0; i < length; i++) {
 			a[i] = a[i] - b[i];
 		}
 	}
 
 	void mul_array1(float*a, float attenu, std::size_t length) {
-		//float* result = (float*)malloc(sizeof(float) * length);
 		for (int i = 0; i < length; i++) {
 			a[i] = a[i] * attenu;
 		}
 	}
 
 	void mul_array2(float* a, float* b, std::size_t length) {
-		//float* result = (float*)malloc(sizeof(float) * length);
 		for (int i = 0; i < length; i++) {
 			a[i] = a[i] * b[i];
 		}

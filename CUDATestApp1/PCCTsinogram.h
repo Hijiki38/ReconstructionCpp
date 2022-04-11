@@ -31,5 +31,7 @@ namespace Reconstruction {
 
 		static PCCTsinogram* read_PCCTsinogram(std::vector<std::string> inpaths);
 
+		void convert_negativelog();
+
 	};
 }
