@@ -5,8 +5,6 @@
 
 namespace Reconstruction {
 
-	const float TOLERANCE = 0.0001;
-
 	float* IterationRec::reconstruction(int itr, int tvitr)
 	{
 		int nd = (*sino).get_nd();
@@ -17,12 +15,54 @@ namespace Reconstruction {
 		float sys_atn, sys_sys;
 		float* _sino = (*sino).get_sinovec();
 
-		SparseMatrix _sysmatblock;
+		std::unique_ptr<SparseMatrix> _sysmatblock;
+		//std::shared_ptr<SparseMatrix> sysmathoge;
 		float* _sysmatrow = (float*)malloc(sizeof(float) * nd * nd);
 
 		bool block = true;
+		bool init = true;
 
-		sysmat = *(generate_sysmat(true,true));  //usegpu writesysmat
+		//itrcount = 0;  //blockÇ≤Ç∆Ç…sysmatÇ¬Ç≠ÇÈÉîÉ@Å[ÉWÉáÉì
+		//while (itrcount < itr)
+		//{
+		//	prevsum = Reconstruction::sum_array(attenu, nd * nd);
+
+		//	if (block == true) { //block-ART
+		//		for (int i = 0; i < nv * nd / block_size; i++) {
+
+		//			std::cout << "gen sysmat:" << i << "/" << nv * nd / block_size << std::endl;
+		//			sysmat = move(generate_sysmat_gpu(i,1,init));
+		//			//std::unique_ptr<SparseMatrix> sysmathoge = generate_sysmat_gpu(i, 1, init);
+
+
+		//			if (init) { init = false; }
+
+		//			for (int j = 0; j < nd * nd; j++) {
+		//				imgdiff[j] = 0;
+		//			}
+
+		//			for (int j = 0; j < block_size; j++) {
+		//				sysmat->Extract_row_dense(j, nd * nd, _sysmatrow);
+		//				calc_imgdiff(imgdiff, _sysmatrow, attenu, _sino[i * block_size + j], nd * nd);
+		//			}
+
+		//			calc_attenu(attenu, imgdiff, nd * nd);
+		//		}
+
+		//		diff = Reconstruction::sum_array(attenu, nd * nd) - prevsum;
+		//		std::cout << "\rIteration:" << itrcount << ", diff:" << diff << string(10, ' ');
+
+		//	}
+
+		//	itrcount++;
+		//}
+
+		//Reconstruction::devicereset();
+
+		//return attenu;
+
+		sysmat = generate_sysmat(false, false);
+		//sysmat = *hoge;
 
 		std::cout << "\nStart iteration";
 
@@ -34,7 +74,8 @@ namespace Reconstruction {
 			if (block == true) { //block-ART
 				for (int i = 0; i < nv * nd / block_size; i++) {
 
-					_sysmatblock = *(sysmat.Create_blockmat(i * block_size, block_size));
+					_sysmatblock = (*sysmat).Create_blockmat(i * block_size, block_size);
+					//_sysmatblock = *(sysmat.Create_blockmat(i * block_size, block_size));
 
 					for (int j = 0; j < nd * nd; j++) {
 						imgdiff[j] = 0;
@@ -43,7 +84,7 @@ namespace Reconstruction {
 					//imgdiff_art = Eigen::VectorXf::Zero(nd * nd);
 					for (int j = 0; j < block_size; j++) {
 
-						_sysmatblock.Extract_row_dense(j, nd * nd, _sysmatrow);
+						(*_sysmatblock).Extract_row_dense(j, nd * nd, _sysmatrow);
 						calc_imgdiff(imgdiff, _sysmatrow, attenu, _sino[i * block_size + j], nd * nd);
 						//imgdiff = imgdiff + ((sys_atn - _sino[i * block_num + j]) / sys_sys) * _sysmatrow;
 					}
@@ -51,17 +92,23 @@ namespace Reconstruction {
 					calc_attenu(attenu, imgdiff, nd * nd);
 					//attenu = attenu - (relpar / block_num) * imgdiff;
 
+
+
 				}
 				diff = Reconstruction::sum_array(attenu, nd * nd) - prevsum;
 				std::cout << "\rIteration:" << itrcount << ", diff:" << diff << string(10, ' ');
 			}
 
 			itrcount++;
+
+
 		}
 
 		std::cout << "\n end iteration!";
 
 		free(_sysmatrow);
+
+		Reconstruction::devicereset();
 
 		return attenu;
 	}
@@ -72,6 +119,32 @@ namespace Reconstruction {
 
 		Reconstruction::mul_array1(smr, ((sys_atn - sn) / sys_sys), size);
 		Reconstruction::add_array(idiff, smr, size);
+	}
+
+	std::unique_ptr<SparseMatrix> IterationRec::generate_sysmat_gpu(int begin, int size, bool init) {
+
+		int nd = sino->get_nd();
+		int nv = sino->get_nv();
+		int center = nd / 2;
+
+		//float* elements = (float*)malloc(sizeof(float) * MAXMATERIALS);	//all nonzero values
+		//int* rowptr = (int*)malloc(sizeof(int) * (nd * size + 1));		//indices of the first nonzero element in each row
+		//int* colind = (int*)malloc(sizeof(int) * MAXMATERIALS);		//the column indices of the corresponding elements
+
+		std::unique_ptr<float[]> elements = std::make_unique<float[]>(MAXMATERIALS);
+		std::unique_ptr<int[]> rowptr = std::make_unique<int[]>((nd * size + 1));	
+		std::unique_ptr<int[]> colind = std::make_unique<int[]>(MAXMATERIALS);	
+
+		int nonzero = 0;		//the number of nonzero elements
+
+		std::cout << "\nStart Generating System Matrix(GPU) " << nd << " " << nv << "\n";
+		nonzero = Reconstruction::calc_sysmat2(elements.get(), rowptr.get(), colind.get(), begin, size, nv, nd, center, geometry_normalized->sdd);
+		rowptr[nd * size] = nonzero;
+		std::cout << "\nSystem matrix generated!(GPU), nonzero = " << nonzero << "\n";
+
+		std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(elements, rowptr, colind, nonzero));
+		return sysmatptr;
+
 	}
 
 	std::unique_ptr<SparseMatrix> IterationRec::generate_sysmat(bool use_gpu, bool write_sysmat) {
@@ -93,15 +166,16 @@ namespace Reconstruction {
 		float center_relative_x, center_relative_y;
 		float area = 0;
 
-		float* elements = (float*)malloc(sizeof(float) * MAXMATERIALS);	//all nonzero values
-		int* rowptr = (int*)malloc(sizeof(int) * (nd * nv + 1));		//indices of the first nonzero element in each row
-		int* colind = (int*)malloc(sizeof(int) * MAXMATERIALS);		//the column indices of the corresponding elements
-		int nonzero = 0;		//the number of nonzero elements
+		//float* elements = (float*)malloc(sizeof(float) * MAXMATERIALS);	//all nonzero values
+		//int* rowptr = (int*)malloc(sizeof(int) * (nd * nv + 1));		//indices of the first nonzero element in each row
+		//int* colind = (int*)malloc(sizeof(int) * MAXMATERIALS);		//the column indices of the corresponding elements
 
-		float* elements_gpu = (float*)malloc(sizeof(float) * MAXMATERIALS);	//all nonzero values
-		int* rowptr_gpu = (int*)malloc(sizeof(int) * (nd * nv + 1));		//indices of the first nonzero element in each row
-		int* colind_gpu = (int*)malloc(sizeof(int) * MAXMATERIALS);		//the column indices of the corresponding elements
-		int nonzero_gpu = 0;		//the number of nonzero elements
+		std::unique_ptr<float[]> elements = std::make_unique<float[]>(MAXMATERIALS);
+		std::unique_ptr<int[]> rowptr = std::make_unique<int[]>((nd * nv + 1));
+		std::unique_ptr<int[]> colind = std::make_unique<int[]>(MAXMATERIALS);
+
+
+		int nonzero = 0;		//the number of nonzero elements
 
 
 		ofstream ofs("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sysmat.csv"); //for debug
@@ -109,63 +183,35 @@ namespace Reconstruction {
 
 		center = nd / 2;
 		center_relative_x = 0;
-		center_relative_y = geometry_normalized->axis_correction;
-
-		std::cout << "\nStart Generating System Matrix(GPU) " << nd << " " << nv << "\n";
+		center_relative_y = geometry_normalized->axiscor_pixels;
 
 
 		if (use_gpu) {
-			nonzero_gpu = Reconstruction::calc_sysmat2(elements_gpu, rowptr_gpu, colind_gpu, nv, nd, center, geometry_normalized->sdd);
-			rowptr_gpu[nd * nv] = nonzero_gpu;
+			std::cout << "\nStart Generating System Matrix(GPU) " << nd << " " << nv << "\n";
+			//nonzero = Reconstruction::calc_sysmat2(elements, rowptr, colind, 0, nv, nd, center, geometry_normalized->sdd);
+			nonzero = Reconstruction::calc_sysmat(elements.get(), rowptr.get(), colind.get(), nv, nd, center, geometry_normalized->sdd);
+			rowptr[nd * nv] = nonzero;
+			std::cout << "\nSystem matrix generated!(GPU), nonzero = " << nonzero << "\n";
+
+			std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(elements, rowptr, colind, nonzero));
+			return sysmatptr;
 		}
+		else {
+			point_abs.set_center(center);
+			theta = 0;
 
-		std::cout << "\nSystem matrix generated!(GPU), nonzero = " << nonzero_gpu << "\n";
-
-		point_abs.set_center(center);
-		theta = 0;
-
-		for (int v = 0; v < nv; v++)
-		{
-			std::cout << "\rGenerating System Matrix(CPU):" << v << " / " << nv;
-
-			if (theta >= PI / 4)
-			{ //ìäâeäpÇ™45ìxÇí¥Ç¶ÇΩÇÁâÊëúÇ90ìxâEâÒì]Ç≥ÇπìäâeäpÇ - 45ìxÇ…
-				rotatecount++;
-				theta -= PI / 2;
-			}
-
-			for (int w = 0; w < nd; w++)
+			for (int v = 0; v < nv; v++)
 			{
-				//if (use_gpu) {
-				//	Reconstruction::calc_sysmat(tmpmat_gpu, nd, center, w, theta, geometry_normalized->sdd, rotatecount);
+				std::cout << "\rGenerating System Matrix(CPU):" << v << " / " << nv;
 
-				//	firstelem = true;
-				//	for (int y = 0; y < nd; y++)
-				//	{
-				//		for (int x = 0; x < nd; x++)
-				//		{
-				//			area = tmpmat_gpu[y * nd + x];
-				//			if (area != 0) {
-				//				if (nonzero == MAXMATERIALS - 1) {
-				//					std::cout << "System matrix is too big!";
-				//					exit(1);
-				//				}
-				//				elements[nonzero] = area;
-				//				colind[nonzero] = nd * y + x;
-				//				if (firstelem) {
-				//					rowptr[nd * v + w] = nonzero;
-				//					firstelem = false;
-				//				}
-				//				nonzero++;
-				//			}
+				if (theta >= PI / 4)
+				{ //ìäâeäpÇ™45ìxÇí¥Ç¶ÇΩÇÁâÊëúÇ90ìxâEâÒì]Ç≥ÇπìäâeäpÇ - 45ìxÇ…
+					rotatecount++;
+					theta -= PI / 2;
+				}
 
-				//			if (write_sysmat) {
-				//				ofs << area << ", ";
-				//			}
-				//		}
-				//	}
-				//}
-				//else {
+				for (int w = 0; w < nd; w++)
+				{
 					firstelem = true;
 					for (int y = 0; y < nd; y++)
 					{
@@ -194,9 +240,6 @@ namespace Reconstruction {
 								area = calc_area(intercept_Y, offset_detector, theta);
 							}
 
-							//intercept_Y = offset_detector - rely + relx * tan(theta + phi);
-
-							//area = calc_area(intercept_Y, offset_detector, theta);
 							if (area != 0) {
 								if (nonzero == MAXMATERIALS - 1) {
 									std::cout << "System matrix is too big!";
@@ -216,59 +259,22 @@ namespace Reconstruction {
 							}
 						}
 					}
-				//}
-				
 
-				if (write_sysmat) {
-					ofs << "\n";
+					if (write_sysmat) {
+						ofs << "\n";
+					}
 				}
+
+				theta += 2 * PI / nv;
 			}
 
-			theta += 2 * PI / nv;
-		}
+			rowptr[nd * nv] = nonzero;
 
-		rowptr[nd * nv] = nonzero;
+			std::cout << "End Generating System Matrix";
 
-
-		//std::cout << "value check!" << std::endl;
-
-		//if (nonzero != nonzero_gpu) {
-		//	std::cout << "nonzero error: GPU(" << nonzero_gpu << "), CPU(" << nonzero << ")";
-		//	//exit(1);
-		//}
-		//for (int i = 0; i < nonzero; i++) {
-		//	if (abs(elements[i] - elements_gpu[i]) > TOLERANCE) {
-		//		std::cout << "elem error at " << i << " / " << nonzero << std::endl;
-		//		std::cout << "value: GPU(" << elements_gpu[i] << "), CPU(" << elements[i] << ")";
-		//		//exit(1);
-		//	}
-		//	if (colind[i] != colind_gpu[i]) {
-		//		std::cout << "colind error";
-		//		//exit(1);
-		//	}
-		//}
-		//for (int i = 0; i < nd * nv + 1; i++) {
-		//	if (rowptr[i] != rowptr_gpu[i]) {
-		//		std::cout << "rowptr error";
-		//		//exit(1);
-		//	}
-		//}
-
-		std::cout << "End Generating System Matrix";
-
-
-		if (use_gpu) {
-			std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(elements_gpu, rowptr_gpu, colind_gpu, nonzero_gpu));
-			return sysmatptr;
-		}
-		else {
 			std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(elements, rowptr, colind, nonzero));
 			return sysmatptr;
 		}
-
-
-		//sysmat = *(sysmatptr);
-
 	}
 
 	float IterationRec::calc_area(float intercept, float detectoroffset, float angle) {

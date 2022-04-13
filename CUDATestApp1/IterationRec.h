@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cstdlib>
 #include <math.h>
 #include "PCCTsinogram.h"
 #include "TV.h"
@@ -13,7 +14,7 @@
 #include "CalcSysmat.cuh"
 
 
-static const int MAXMATERIALS = 250000000;
+static const int MAXMATERIALS = 150000000;
 extern const double PI;
 
 namespace Reconstruction {
@@ -24,7 +25,7 @@ namespace Reconstruction {
 	protected:
 		Reconstruction::PCCTsinogram* sino;
 
-		SparseMatrix sysmat;
+		std::unique_ptr<SparseMatrix> sysmat;
 		float* attenu, * imgdiff;
 
 		float relpar;// = 1.05;
@@ -53,12 +54,12 @@ namespace Reconstruction {
 			geometry_normalized->pixelsize = geometry->pixelsize;
 			geometry_normalized->sod = geometry->sod / geometry->pixelsize;
 			geometry_normalized->sdd = geometry->sdd / geometry->pixelsize;
-			geometry_normalized->axis_correction = geometry->axis_correction;
+			geometry_normalized->axiscor_pixels = geometry->axiscor_pixels;
 
 			block_size = n_detector;
 			//block_num = 1;
 
-			sysmat = *(new SparseMatrix());
+			//sysmat = *(new SparseMatrix());
 			attenu = (float*)malloc(n_detector * n_detector * n_bin * sizeof(float));
 			imgdiff = (float*)malloc(n_detector * n_detector * n_bin * sizeof(float));
 
@@ -70,6 +71,7 @@ namespace Reconstruction {
 
 		float* reconstruction(int itr, int tvitr = -1);
 
+		std::unique_ptr<SparseMatrix> generate_sysmat_gpu(int begin, int size, bool init);
 		std::unique_ptr<SparseMatrix> generate_sysmat(bool use_gpu = false, bool write_sysmat = false);
 
 		virtual void calc_imgdiff(float* idiff, float* smr, float* atn, float sn, int size) const;
