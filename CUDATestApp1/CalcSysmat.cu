@@ -235,7 +235,11 @@ namespace Reconstruction {
 		return;
 	}
 
+<<<<<<< Updated upstream
 	int calc_sysmat2(float* elem, int* rowptr, int* colind, const int nv, const int nd, const int center, const int sdd) {
+=======
+	int calc_sysmat2(float* elem, int* rowptr, int* colind, const int v_start, const int v_size, const int nv, const int nd, const int center, const float sdd, const bool init, const bool write_sysmat) {
+>>>>>>> Stashed changes
 
 		float area = 0;
 		float theta = 0;
@@ -245,7 +249,16 @@ namespace Reconstruction {
 		int nonzero = 0;
 		float* tmpmat = (float*)malloc(sizeof(float) * nd * nd);
 
+<<<<<<< Updated upstream
 		FILE* fp;
+=======
+
+
+		if (write_sysmat) {
+			FILE* fp;
+			fp = fopen("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sysmatgpu.csv", "w");
+		}
+>>>>>>> Stashed changes
 
 		fp = fopen("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sysmatgpu.csv", "w");
 
@@ -271,7 +284,18 @@ namespace Reconstruction {
 		char str[100000];
 		char buf[24];
 
+<<<<<<< Updated upstream
 		str[0] = '\0';
+=======
+		for (int i = 0; i < v_start; i++) {
+			if (theta >= PI / 4)
+			{ //“Š‰eŠp‚ª45“x‚ð’´‚¦‚½‚ç‰æ‘œ‚ð90“x‰E‰ñ“]‚³‚¹“Š‰eŠp‚ð - 45“x‚É
+				rotatecount++;
+				theta -= PI / 2;
+			}
+			theta += 2 * PI / nv;
+		}
+>>>>>>> Stashed changes
 
 		for (int v = 0; v < nv; v++)
 		{
@@ -308,13 +332,10 @@ namespace Reconstruction {
 					{
 						area = tmpmat[y * nd + x];
 						if (area != 0) {
-							//if (nonzero == MAXMATERIALS - 1) {
-							//	exit(1);
-							//}
 							elem[nonzero] = area;
 							colind[nonzero] = nd * y + x;
 							if (firstelem) {
-								rowptr[nd * v + w] = nonzero;
+								rowptr[nd * (v - v_start) + w] = nonzero;
 								firstelem = false;
 							}
 							nonzero++;
@@ -336,7 +357,25 @@ namespace Reconstruction {
 		CHECK(cudaFree(d_res));
 		cudaDeviceReset();
 
+<<<<<<< Updated upstream
 		fclose(fp);
+=======
+
+
+		//printf("\nfree tmpmat\n");
+		free(tmpmat);
+		//printf("... finished\n");
+>>>>>>> Stashed changes
+
+		////for debug
+		//elem[0] = 0;
+		//rowptr[0] = 0;
+		//colind[0] = 0;
+		//return 0;
+		////
+
+
+		//printf("\n %d !!!!!!!!!!!!!!!!!!!!!!!! \n", nonzero);
 
 		return nonzero;
 	}

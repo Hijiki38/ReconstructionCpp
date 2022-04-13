@@ -17,12 +17,63 @@ namespace Reconstruction {
 		float sys_atn, sys_sys;
 		float* _sino = (*sino).get_sinovec();
 
+<<<<<<< Updated upstream
 		SparseMatrix _sysmatblock;
 		float* _sysmatrow = (float*)malloc(sizeof(float) * nd * nd);
 
 		bool block = true;
 
 		sysmat = *(generate_sysmat(true,true));  //usegpu writesysmat
+=======
+		std::unique_ptr<SparseMatrix> _sysmatblock;
+		//std::shared_ptr<SparseMatrix> sysmathoge;
+		float* _sysmatrow = (float*)malloc(sizeof(float) * nd * nd);
+
+		bool block = true;
+		bool init = true;
+
+		//itrcount = 0;  //blockÇ≤Ç∆Ç…sysmatÇ¬Ç≠ÇÈÉîÉ@Å[ÉWÉáÉì
+		//while (itrcount < itr)
+		//{
+		//	prevsum = Reconstruction::sum_array(attenu, nd * nd);
+
+		//	if (block == true) { //block-ART
+		//		for (int i = 0; i < nv * nd / block_size; i++) {
+
+		//			std::cout << "gen sysmat:" << i << "/" << nv * nd / block_size << std::endl;
+		//			sysmat = move(generate_sysmat_gpu(i,1,init));
+		//			//std::unique_ptr<SparseMatrix> sysmathoge = generate_sysmat_gpu(i, 1, init);
+
+
+		//			if (init) { init = false; }
+
+		//			for (int j = 0; j < nd * nd; j++) {
+		//				imgdiff[j] = 0;
+		//			}
+
+		//			for (int j = 0; j < block_size; j++) {
+		//				sysmat->Extract_row_dense(j, nd * nd, _sysmatrow);
+		//				calc_imgdiff(imgdiff, _sysmatrow, attenu, _sino[i * block_size + j], nd * nd);
+		//			}
+
+		//			calc_attenu(attenu, imgdiff, nd * nd);
+		//		}
+
+		//		diff = Reconstruction::sum_array(attenu, nd * nd) - prevsum;
+		//		std::cout << "\rIteration:" << itrcount << ", diff:" << diff << string(10, ' ');
+
+		//	}
+
+		//	itrcount++;
+		//}
+
+		//Reconstruction::devicereset();
+
+		//return attenu;
+
+		sysmat = generate_sysmat(false, false);
+		//sysmat = *hoge;
+>>>>>>> Stashed changes
 
 		std::cout << "\nStart iteration";
 
@@ -51,12 +102,16 @@ namespace Reconstruction {
 					calc_attenu(attenu, imgdiff, nd * nd);
 					//attenu = attenu - (relpar / block_num) * imgdiff;
 
+
+
 				}
 				diff = Reconstruction::sum_array(attenu, nd * nd) - prevsum;
 				std::cout << "\rIteration:" << itrcount << ", diff:" << diff << string(10, ' ');
 			}
 
 			itrcount++;
+
+
 		}
 
 		std::cout << "\n end iteration!";
@@ -74,6 +129,35 @@ namespace Reconstruction {
 		Reconstruction::add_array(idiff, smr, size);
 	}
 
+<<<<<<< Updated upstream
+=======
+	std::unique_ptr<SparseMatrix> IterationRec::generate_sysmat_gpu(int begin, int size, bool init) {
+
+		int nd = sino->get_nd();
+		int nv = sino->get_nv();
+		int center = nd / 2;
+
+		//float* elements = (float*)malloc(sizeof(float) * MAXMATERIALS);	//all nonzero values
+		//int* rowptr = (int*)malloc(sizeof(int) * (nd * size + 1));		//indices of the first nonzero element in each row
+		//int* colind = (int*)malloc(sizeof(int) * MAXMATERIALS);		//the column indices of the corresponding elements
+
+		std::unique_ptr<float[]> elements = std::make_unique<float[]>(MAXMATERIALS);
+		std::unique_ptr<int[]> rowptr = std::make_unique<int[]>((nd * size + 1));	
+		std::unique_ptr<int[]> colind = std::make_unique<int[]>(MAXMATERIALS);	
+
+		int nonzero = 0;		//the number of nonzero elements
+
+		std::cout << "\nStart Generating System Matrix(GPU) " << nd << " " << nv << "\n";
+		nonzero = Reconstruction::calc_sysmat2(elements.get(), rowptr.get(), colind.get(), begin, size, nv, nd, center, geometry_normalized->sdd);
+		rowptr[nd * size] = nonzero;
+		std::cout << "\nSystem matrix generated!(GPU), nonzero = " << nonzero << "\n";
+
+		std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(elements, rowptr, colind, nonzero));
+		return sysmatptr;
+
+	}
+
+>>>>>>> Stashed changes
 	std::unique_ptr<SparseMatrix> IterationRec::generate_sysmat(bool use_gpu, bool write_sysmat) {
 		int center;
 		float relx = 0;
@@ -114,9 +198,14 @@ namespace Reconstruction {
 		std::cout << "\nStart Generating System Matrix(GPU) " << nd << " " << nv << "\n";
 
 
+<<<<<<< Updated upstream
 		if (use_gpu) {
 			nonzero_gpu = Reconstruction::calc_sysmat2(elements_gpu, rowptr_gpu, colind_gpu, nv, nd, center, geometry_normalized->sdd);
 			rowptr_gpu[nd * nv] = nonzero_gpu;
+=======
+			std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(elements, rowptr, colind, nonzero));
+			return sysmatptr;
+>>>>>>> Stashed changes
 		}
 
 		std::cout << "\nSystem matrix generated!(GPU), nonzero = " << nonzero_gpu << "\n";
@@ -254,11 +343,15 @@ namespace Reconstruction {
 		//	}
 		//}
 
+<<<<<<< Updated upstream
 		std::cout << "End Generating System Matrix";
 
 
 		if (use_gpu) {
 			std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(elements_gpu, rowptr_gpu, colind_gpu, nonzero_gpu));
+=======
+			std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(elements, rowptr, colind, nonzero));
+>>>>>>> Stashed changes
 			return sysmatptr;
 		}
 		else {
