@@ -26,8 +26,8 @@ namespace Reconstruction {
 	int calc_sysmat(float* elem, int* rowptr, int* colind, const int vn, const int nd, 
 		const int center, const float sdd, const bool write_sysmat = false);
 
-	int calc_sysmat2(float* elem, int* rowptr, int* colind, const int v_start,
-		const int v_size, const int nd, const int center, const float sdd, const bool init = false, const bool write_sysmat = false);
+	int calc_sysmat2(float* elem, int* rowptr, int* colind, const int v_start, const int v_size, 
+		const int nv, const int nd, const int center, const float sdd, const bool init = false, const bool write_sysmat = false);
 
 	double cpuSecond();
 }

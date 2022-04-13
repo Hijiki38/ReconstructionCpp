@@ -329,7 +329,7 @@ namespace Reconstruction {
 		return nonzero;
 	}
 
-	int calc_sysmat2(float* elem, int* rowptr, int* colind, const int v_start, const int v_size, const int nd, const int center, const float sdd, const bool init, const bool write_sysmat) {
+	int calc_sysmat2(float* elem, int* rowptr, int* colind, const int v_start, const int v_size, const int nv, const int nd, const int center, const float sdd, const bool init, const bool write_sysmat) {
 
 		float area = 0;
 		float theta = 0;
@@ -338,6 +338,8 @@ namespace Reconstruction {
 
 		int nonzero = 0;
 		float* tmpmat = (float*)malloc(sizeof(float) * nd * nd);
+
+
 
 		if (write_sysmat) {
 			FILE* fp;
@@ -376,7 +378,7 @@ namespace Reconstruction {
 				rotatecount++;
 				theta -= PI / 2;
 			}
-			theta += 2 * PI / (v_start + v_size);
+			theta += 2 * PI / nv;
 		}
 
 		for (int v = v_start; v < v_start + v_size; v++)
@@ -425,13 +427,10 @@ namespace Reconstruction {
 					{
 						area = tmpmat[y * nd + x];
 						if (area != 0) {
-							//if (nonzero == MAXMATERIALS - 1) {
-							//	exit(1);
-							//}
 							elem[nonzero] = area;
 							colind[nonzero] = nd * y + x;
 							if (firstelem) {
-								rowptr[nd * v + w] = nonzero;
+								rowptr[nd * (v - v_start) + w] = nonzero;
 								firstelem = false;
 							}
 							nonzero++;
@@ -453,7 +452,7 @@ namespace Reconstruction {
 
 			}
 
-			theta += 2 * PI / (v_start + v_size);
+			theta += 2 * PI / nv;
 		}
 
 		//printf("\ncudafree\n");
@@ -470,9 +469,21 @@ namespace Reconstruction {
 		// for debug
 		//exit(0);
 
+
+
 		//printf("\nfree tmpmat\n");
 		free(tmpmat);
 		//printf("... finished\n");
+
+		////for debug
+		//elem[0] = 0;
+		//rowptr[0] = 0;
+		//colind[0] = 0;
+		//return 0;
+		////
+
+
+		//printf("\n %d !!!!!!!!!!!!!!!!!!!!!!!! \n", nonzero);
 
 		return nonzero;
 	}

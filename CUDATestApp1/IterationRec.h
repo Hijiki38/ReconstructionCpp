@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cstdlib>
 #include <math.h>
 #include "PCCTsinogram.h"
 #include "TV.h"
@@ -13,7 +14,7 @@
 #include "CalcSysmat.cuh"
 
 
-static const int MAXMATERIALS = 15000000;
+static const int MAXMATERIALS = 150000000;
 extern const double PI;
 
 namespace Reconstruction {

@@ -16,52 +16,52 @@ namespace Reconstruction {
 		float* _sino = (*sino).get_sinovec();
 
 		std::unique_ptr<SparseMatrix> _sysmatblock;
-		std::unique_ptr<SparseMatrix> sysmat;
+		//std::shared_ptr<SparseMatrix> sysmathoge;
 		float* _sysmatrow = (float*)malloc(sizeof(float) * nd * nd);
 
 		bool block = true;
 		bool init = true;
 
-		itrcount = 0;  //blockごとにsysmatつくるヴァージョン
-		while (itrcount < itr)
-		{
-			prevsum = Reconstruction::sum_array(attenu, nd * nd);
+		//itrcount = 0;  //blockごとにsysmatつくるヴァージョン
+		//while (itrcount < itr)
+		//{
+		//	prevsum = Reconstruction::sum_array(attenu, nd * nd);
 
-			if (block == true) { //block-ART
-				for (int i = 0; i < nv * nd / block_size; i++) {
+		//	if (block == true) { //block-ART
+		//		for (int i = 0; i < nv * nd / block_size; i++) {
 
-					std::cout << "block:" << i << "/" << nv * nd / block_size << std::endl;
-					sysmat = generate_sysmat_gpu(i,1,init);
-					//std::unique_ptr<SparseMatrix> sysmat = generate_sysmat_gpu(i, 1, init);
+		//			std::cout << "gen sysmat:" << i << "/" << nv * nd / block_size << std::endl;
+		//			sysmat = move(generate_sysmat_gpu(i,1,init));
+		//			//std::unique_ptr<SparseMatrix> sysmathoge = generate_sysmat_gpu(i, 1, init);
 
-					if (init) { init = false; }
 
-					for (int j = 0; j < nd * nd; j++) {
-						imgdiff[j] = 0;
-					}
+		//			if (init) { init = false; }
 
-					for (int j = 0; j < block_size; j++) {
-						sysmat->Extract_row_dense(j, nd * nd, _sysmatrow);
-						calc_imgdiff(imgdiff, _sysmatrow, attenu, _sino[i * block_size + j], nd * nd);
-					}
+		//			for (int j = 0; j < nd * nd; j++) {
+		//				imgdiff[j] = 0;
+		//			}
 
-					calc_attenu(attenu, imgdiff, nd * nd);
+		//			for (int j = 0; j < block_size; j++) {
+		//				sysmat->Extract_row_dense(j, nd * nd, _sysmatrow);
+		//				calc_imgdiff(imgdiff, _sysmatrow, attenu, _sino[i * block_size + j], nd * nd);
+		//			}
 
-					std::cout << "hoge\n";
-					//delete &sysmat;
-				}
-				diff = Reconstruction::sum_array(attenu, nd * nd) - prevsum;
-				std::cout << "\rIteration:" << itrcount << ", diff:" << diff << string(10, ' ');
-			}
+		//			calc_attenu(attenu, imgdiff, nd * nd);
+		//		}
 
-			itrcount++;
-		}
+		//		diff = Reconstruction::sum_array(attenu, nd * nd) - prevsum;
+		//		std::cout << "\rIteration:" << itrcount << ", diff:" << diff << string(10, ' ');
 
-		Reconstruction::devicereset();
+		//	}
 
-		return attenu;
+		//	itrcount++;
+		//}
 
-		sysmat = generate_sysmat(true, true);
+		//Reconstruction::devicereset();
+
+		//return attenu;
+
+		sysmat = generate_sysmat(false, false);
 		//sysmat = *hoge;
 
 		std::cout << "\nStart iteration";
@@ -92,12 +92,16 @@ namespace Reconstruction {
 					calc_attenu(attenu, imgdiff, nd * nd);
 					//attenu = attenu - (relpar / block_num) * imgdiff;
 
+
+
 				}
 				diff = Reconstruction::sum_array(attenu, nd * nd) - prevsum;
 				std::cout << "\rIteration:" << itrcount << ", diff:" << diff << string(10, ' ');
 			}
 
 			itrcount++;
+
+
 		}
 
 		std::cout << "\n end iteration!";
@@ -134,11 +138,11 @@ namespace Reconstruction {
 		int nonzero = 0;		//the number of nonzero elements
 
 		std::cout << "\nStart Generating System Matrix(GPU) " << nd << " " << nv << "\n";
-		nonzero = Reconstruction::calc_sysmat2(elements.get(), rowptr.get(), colind.get(), begin, size, nd, center, geometry_normalized->sdd);
+		nonzero = Reconstruction::calc_sysmat2(elements.get(), rowptr.get(), colind.get(), begin, size, nv, nd, center, geometry_normalized->sdd);
 		rowptr[nd * size] = nonzero;
 		std::cout << "\nSystem matrix generated!(GPU), nonzero = " << nonzero << "\n";
 
-		std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(std::move(elements), std::move(rowptr), std::move(colind), std::move(nonzero)));
+		std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(elements, rowptr, colind, nonzero));
 		return sysmatptr;
 
 	}
@@ -189,7 +193,7 @@ namespace Reconstruction {
 			rowptr[nd * nv] = nonzero;
 			std::cout << "\nSystem matrix generated!(GPU), nonzero = " << nonzero << "\n";
 
-			std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(std::move(elements), std::move(rowptr), std::move(colind), nonzero));
+			std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(elements, rowptr, colind, nonzero));
 			return sysmatptr;
 		}
 		else {
@@ -268,7 +272,7 @@ namespace Reconstruction {
 
 			std::cout << "End Generating System Matrix";
 
-			std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(std::move(elements), std::move(rowptr), std::move(colind), std::move(nonzero)));
+			std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(elements, rowptr, colind, nonzero));
 			return sysmatptr;
 		}
 	}
