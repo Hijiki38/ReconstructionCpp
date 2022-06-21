@@ -131,6 +131,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\eigen-3.4.0\eigen-3.4.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -143,6 +145,7 @@
   <ItemGroup>
     <ClCompile Include="ART.cpp" />
     <ClCompile Include="FBP.cpp" />
+    <ClCompile Include="IterativeMatDec.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MLEM.cpp" />
     <ClCompile Include="PCCTsinogram.cpp" />
@@ -150,6 +153,7 @@
     <ClCompile Include="IterationRec.cpp" />
     <ClCompile Include="sinogram.cpp" />
     <ClCompile Include="SparseMatrix.cpp" />
+    <ClCompile Include="spectrum.cpp" />
     <ClCompile Include="TV.cpp" />
     <ClCompile Include="methods.cpp" />
   </ItemGroup>
@@ -187,19 +191,27 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ART.h" />
+    <ClInclude Include="CalcImgdiff.cuh" />
+    <ClInclude Include="CalcMat.cuh" />
     <ClInclude Include="CalcSysmat.cuh" />
     <ClInclude Include="consts.h" />
+    <ClInclude Include="DenseMatrix.h" />
     <ClInclude Include="geometry.h" />
+    <ClInclude Include="IterativeMatDec.h" />
+    <ClInclude Include="materials.h" />
     <ClInclude Include="MLEM.h" />
     <ClInclude Include="PCCTsinogram.h" />
     <ClInclude Include="point.h" />
     <ClInclude Include="IterationRec.h" />
     <ClInclude Include="sinogram.h" />
     <ClInclude Include="SparseMatrix.h" />
+    <ClInclude Include="spectrum.h" />
     <ClInclude Include="TV.h" />
     <ClInclude Include="methods.h" />
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="CalcImgdiff.cu" />
+    <CudaCompile Include="CalcMat.cu" />
     <CudaCompile Include="CalcSysmat.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -20,8 +20,8 @@ namespace Reconstruction {
 
 	public:
 
-		ART(Reconstruction::PCCTsinogram* s, Reconstruction::geometry* geometry)
-			: IterationRec(s, geometry, 1.05) {};
+		ART(Reconstruction::PCCTsinogram* s, Reconstruction::geometry* geometry, int blocksize)
+			: IterationRec(s, geometry, 1.05, blocksize) {};
 
 		void calc_imgdiff(float* idiff, float* smr, float* atn, float sn, int size) const override;
 		void calc_attenu(float* atn, float* idiff, int size) const override;

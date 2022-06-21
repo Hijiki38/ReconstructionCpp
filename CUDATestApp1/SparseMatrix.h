@@ -5,7 +5,7 @@
 #include <string>
 #include "Eigen/Sparse"
 
-using namespace std;
+//using namespace std;
 using namespace Eigen;
 
 namespace Reconstruction {
@@ -17,11 +17,6 @@ namespace Reconstruction {
 		std::unique_ptr<int[]> colind;		//the column indices of the corresponding elements
 		int nonzero;		//the number of nonzero elements
 
-		//float* elements;	//all nonzero values
-		//int* rowptr;		//indices of the first nonzero element in each row
-		//int* colind;		//the column indices of the corresponding elements
-		//int nonzero;		//the number of nonzero elements
-
 	public:
 		SparseMatrix(std::unique_ptr<float[]>& elem, std::unique_ptr<int[]>& rptr, std::unique_ptr<int[]>& cind, int nz)
 			: elements(move(elem))
@@ -30,38 +25,11 @@ namespace Reconstruction {
 			, nonzero(nz){}
 
 
-		//SparseMatrix(float* elem, int* rptr, int* cind, int nz) {
-		//	elements = elem;
-		//	rowptr = rptr;
-		//	colind = cind;
-		//	nonzero = nz;
-		//}
-
-		//~SparseMatrix() {
-		//	std::cout << "destruction!";
-		//	if (elements) 
-		//		elements.reset();
-		//	if (rowptr) 
-		//		rowptr.reset();
-		//	if (colind) 
-		//		colind.reset();
-		//	std::cout << " ...finished!\n";
-		//}
-
 		~SparseMatrix(){}
-
-		//std::unique_ptr<float[]> get_elements() { return elements; }
-		//std::unique_ptr<int[]> get_rowptr() { return rowptr; }
-		//std::unique_ptr<int[]> get_colind() { return colind; }
-		//int get_nonzero() { return nonzero; }
 
 		std::unique_ptr<SparseMatrix> Create_blockmat(int begin, int rows) {
 
 			int elem_num = rowptr.get()[begin + rows] - rowptr.get()[begin];
-
-			//float* elements_new = (float*)malloc(elem_num * sizeof(float));
-			//int* rowptr_new = (int*)malloc((rows + 1) * sizeof(int));
-			//int* colind_new = (int*)malloc(elem_num * sizeof(float));
 
 			std::unique_ptr<float[]> elements_new = std::make_unique<float[]>(elem_num);	//all nonzero values
 			std::unique_ptr<int[]> rowptr_new = std::make_unique<int[]>((rows + 1));		//indices of the first nonzero element in each row

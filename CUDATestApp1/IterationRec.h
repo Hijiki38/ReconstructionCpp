@@ -14,7 +14,7 @@
 #include "CalcSysmat.cuh"
 
 
-static const int MAXMATERIALS = 150000000;
+static const int MAXMATERIALS = 450000000;
 extern const double PI;
 
 namespace Reconstruction {
@@ -26,6 +26,7 @@ namespace Reconstruction {
 		Reconstruction::PCCTsinogram* sino;
 
 		std::unique_ptr<SparseMatrix> sysmat;
+		//std::vector<float*> attenu, imgdiff;   //material images
 		float* attenu, * imgdiff;
 
 		float relpar;// = 1.05;
@@ -33,11 +34,13 @@ namespace Reconstruction {
 
 		int block_size;
 
+		
+
 		Reconstruction::geometry* geometry_normalized = new geometry();
 
 
 	public:
-		IterationRec(Reconstruction::PCCTsinogram* s, Reconstruction::geometry* geometry, float par) {
+		IterationRec(Reconstruction::PCCTsinogram* s, Reconstruction::geometry* geometry, float par, int size) {
 
 			relpar = par;
 
@@ -45,7 +48,7 @@ namespace Reconstruction {
 
 			int n_detector = (*s).get_nd();
 			int n_view = (*s).get_nv();
-			int n_bin = 1;// (*s).get_ne();  //‚Æ‚è‚ ‚¦‚¸single bin
+			int n_bin = (*s).get_nb();  
 
 			std::cout << "header, nd:" << n_detector << " nv:" << n_view << "\n";
 
@@ -56,7 +59,7 @@ namespace Reconstruction {
 			geometry_normalized->sdd = geometry->sdd / geometry->pixelsize;
 			geometry_normalized->axiscor_pixels = geometry->axiscor_pixels;
 
-			block_size = n_detector;
+			block_size = n_detector * size;
 			//block_num = 1;
 
 			//sysmat = *(new SparseMatrix());
@@ -69,7 +72,7 @@ namespace Reconstruction {
 			}
 		}
 
-		float* reconstruction(int itr, int tvitr = -1);
+		float* reconstruction(int itr, bool usegpu);
 
 		std::unique_ptr<SparseMatrix> generate_sysmat_gpu(int begin, int size, bool init);
 		std::unique_ptr<SparseMatrix> generate_sysmat(bool use_gpu = false, bool write_sysmat = false);

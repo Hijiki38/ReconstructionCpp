@@ -253,8 +253,9 @@ namespace Reconstruction {
 		int nBytes = nxy * sizeof(float);
 
 		float* d_res;
+		printf("\ncudamalloc");
 		CHECK(cudaMalloc((void**)&d_res, nBytes));
-
+		printf("\ncompleted");
 		//CHECK(cudaMemcpy(d_res, tmpmat, nBytes, cudaMemcpyHostToDevice));
 
 		int dimx = 32;
@@ -325,6 +326,7 @@ namespace Reconstruction {
 		CHECK(cudaFree(d_res));
 		CHECK(cudaDeviceReset());
 
+		//printf("check elem[100]: %f\n", elem[100]);
 
 		return nonzero;
 	}
@@ -426,7 +428,7 @@ namespace Reconstruction {
 					for (int x = 0; x < nd; x++)
 					{
 						area = tmpmat[y * nd + x];
-						if (area != 0) {
+						if (area != 0 && (x - center) * (x - center) + (y - center) * (y - center) > center * center ) {
 							elem[nonzero] = area;
 							colind[nonzero] = nd * y + x;
 							if (firstelem) {
@@ -455,11 +457,13 @@ namespace Reconstruction {
 			theta += 2 * PI / nv;
 		}
 
+		printf("check elem[100]: %f\n", elem[100]);
+
 		//printf("\ncudafree\n");
 		CHECK(cudaFree(d_res));
 		//printf("... finished\n");
 		//printf("\ncudadevicereset\n");
-		//CHECK(cudaDeviceReset());
+		CHECK(cudaDeviceReset());
 		//printf("... finished\n");
 
 		//if (write_sysmat) {

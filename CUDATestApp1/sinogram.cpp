@@ -12,20 +12,20 @@ namespace Reconstruction {
 	
 	int sinogram::get_nv() { return n_v; }
 
-	sinogram* sinogram::read_sinogram(string inpath) {
+	sinogram* sinogram::read_sinogram(std::string inpath) {
 
-		ifstream stream(inpath);
-		string line;
-		vector<float> sinovec;
+		std::ifstream stream(inpath);
+		std::string line;
+		std::vector<float> sinovec;
 		int count_row = 0;
 		int count_all = 0;
 		bool first = false;
 
-		cout << "read sinogram";
+		std::cout << "read sinogram";
 
 		while (getline(stream, line)) {
 			//cout << "readrow:" << count_row << "\n";
-			vector<string> strs = Reconstruction::splitstring(line, ',');
+			std::vector<std::string> strs = Reconstruction::splitstring(line, ',');
 			for (int i = 0; i < strs.size(); i++) {
 				sinovec.push_back(stof(strs.at(i)));
 				count_all++;
@@ -34,11 +34,11 @@ namespace Reconstruction {
 			count_row++;
 		}
 
-		cout << "d: " << (count_all / count_row) << ", v: " << count_row << "\n";
+		std::cout << "d: " << (count_all / count_row) << ", v: " << count_row << "\n";
 
 		sinogram* sino = new sinogram(&sinovec, count_all / count_row, count_row);
 
-		cout << "d: " << (*sino).get_nd() << ", v: " << (*sino).get_nv() << "\n";
+		std::cout << "d: " << (*sino).get_nd() << ", v: " << (*sino).get_nv() << "\n";
 
 		return sino;
 	}

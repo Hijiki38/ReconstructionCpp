@@ -19,8 +19,8 @@ namespace Reconstruction {
 
 	public:
 
-		MLEM(Reconstruction::PCCTsinogram* s, Reconstruction::geometry* geometry)
-			: IterationRec(s, geometry, 1) {};
+		MLEM(Reconstruction::PCCTsinogram* s, Reconstruction::geometry* geometry, int blocksize)
+			: IterationRec(s, geometry, 1, blocksize) {};
 
 		void calc_imgdiff(float* idiff, float* smr, float* atn, float sn, int size) const override;
 		void calc_attenu(float* atn, float* idiff, int size) const override;

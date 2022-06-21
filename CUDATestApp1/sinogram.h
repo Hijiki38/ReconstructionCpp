@@ -5,7 +5,7 @@
 #include <string>
 #include "Eigen/Sparse"
 
-using namespace std;
+//using namespace std;
 using namespace Eigen;
 
 namespace Reconstruction {
@@ -25,7 +25,7 @@ namespace Reconstruction {
 			n_v = v;
 		}
 
-		sinogram(vector<float>* svec, int d, int v) {
+		sinogram(std::vector<float>* svec, int d, int v) {
 			VectorXf tmp = Map<VectorXf, Unaligned>(svec->data(), svec->size());
 			eigen_sinovec = tmp; // Map<VectorXf, Unaligned>(svec.data(), svec.size());
 			n_d = d;
@@ -43,7 +43,7 @@ namespace Reconstruction {
 		int get_nv();
 
 
-		static sinogram* read_sinogram(string inpath);
+		static sinogram* read_sinogram(std::string inpath);
 
 	};
 }

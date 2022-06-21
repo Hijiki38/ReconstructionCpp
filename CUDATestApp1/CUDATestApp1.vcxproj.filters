@@ -60,6 +60,12 @@
     <ClCompile Include="SparseMatrix.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="IterativeMatDec.cpp">
+      <Filter>ソース ファイル\Algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="spectrum.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sinogram.h">
@@ -98,6 +104,24 @@
     <ClInclude Include="CalcSysmat.cuh">
       <Filter>ヘッダー ファイル\Algorithm</Filter>
     </ClInclude>
+    <ClInclude Include="CalcImgdiff.cuh">
+      <Filter>ヘッダー ファイル\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="IterativeMatDec.h">
+      <Filter>ヘッダー ファイル\Algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="materials.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="spectrum.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="DenseMatrix.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="CalcMat.cuh">
+      <Filter>ヘッダー ファイル\Util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Eigen\Cholesky" />
@@ -134,6 +158,12 @@
   <ItemGroup>
     <CudaCompile Include="CalcSysmat.cu">
       <Filter>ソース ファイル\Algorithm</Filter>
+    </CudaCompile>
+    <CudaCompile Include="CalcImgdiff.cu">
+      <Filter>ソース ファイル\Algorithm</Filter>
+    </CudaCompile>
+    <CudaCompile Include="CalcMat.cu">
+      <Filter>ソース ファイル\Util</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

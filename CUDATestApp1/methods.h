@@ -8,7 +8,7 @@
 
 
 namespace Reconstruction {
-	vector<string> splitstring(string& input, char delimiter);
+	std::vector<std::string> splitstring(std::string& input, char delimiter);
 	void add_array(float* a, float* b, std::size_t length);
 	void sub_array(float* a, float* b, std::size_t length);
 	void mul_array1(float* a, float attenu, std::size_t length);

@@ -5,11 +5,11 @@
 
 namespace Reconstruction {
 
-	float* IterationRec::reconstruction(int itr, int tvitr)
+	float* IterationRec::reconstruction(int itr, bool usegpu)
 	{
 		int nd = (*sino).get_nd();
 		int nv = (*sino).get_nv();
-		int ne = (*sino).get_ne();
+		int ne = (*sino).get_nb();
 		float prevsum, diff;
 		int itrcount;
 		float sys_atn, sys_sys;
@@ -22,46 +22,51 @@ namespace Reconstruction {
 		bool block = true;
 		bool init = true;
 
-		//itrcount = 0;  //blockごとにsysmatつくるヴァージョン
-		//while (itrcount < itr)
-		//{
-		//	prevsum = Reconstruction::sum_array(attenu, nd * nd);
+		//bool eachblockmode = false;
 
-		//	if (block == true) { //block-ART
-		//		for (int i = 0; i < nv * nd / block_size; i++) {
+		//if (eachblockmode) {
+		//	itrcount = 0;  //blockごとにsysmatつくるヴァージョン
+		//	while (itrcount < itr)
+		//	{
+		//		prevsum = Reconstruction::sum_array(attenu, nd * nd);
 
-		//			std::cout << "gen sysmat:" << i << "/" << nv * nd / block_size << std::endl;
-		//			sysmat = move(generate_sysmat_gpu(i,1,init));
-		//			//std::unique_ptr<SparseMatrix> sysmathoge = generate_sysmat_gpu(i, 1, init);
+		//		if (block == true) { //block-ART
 
+		//			for (int i = 0; i < nv * nd / block_size; i++) {
 
-		//			if (init) { init = false; }
+		//				std::cout << "\rgen sysmat:" << i << "/" << nv * nd / block_size; // << std::endl;
+		//				sysmat = move(generate_sysmat_gpu(i * block_size / nd, block_size / nd, init));
+		//				//std::unique_ptr<SparseMatrix> sysmathoge = generate_sysmat_gpu(i, 1, init);
 
-		//			for (int j = 0; j < nd * nd; j++) {
-		//				imgdiff[j] = 0;
+		//				if (init) { init = false; }
+
+		//				for (int j = 0; j < nd * nd; j++) {
+		//					imgdiff[j] = 0;
+		//				}
+
+		//				for (int j = 0; j < block_size; j++) {
+		//					sysmat->Extract_row_dense(j, nd * nd, _sysmatrow);
+		//					calc_imgdiff(imgdiff, _sysmatrow, attenu, _sino[i * block_size + j], nd * nd);
+		//				}
+
+		//				calc_attenu(attenu, imgdiff, nd * nd);
 		//			}
 
-		//			for (int j = 0; j < block_size; j++) {
-		//				sysmat->Extract_row_dense(j, nd * nd, _sysmatrow);
-		//				calc_imgdiff(imgdiff, _sysmatrow, attenu, _sino[i * block_size + j], nd * nd);
-		//			}
+		//			diff = Reconstruction::sum_array(attenu, nd * nd) - prevsum;
+		//			std::cout << "\rIteration:" << itrcount << ", diff:" << diff << string(10, ' ');
 
-		//			calc_attenu(attenu, imgdiff, nd * nd);
 		//		}
 
-		//		diff = Reconstruction::sum_array(attenu, nd * nd) - prevsum;
-		//		std::cout << "\rIteration:" << itrcount << ", diff:" << diff << string(10, ' ');
-
+		//		itrcount++;
 		//	}
 
-		//	itrcount++;
+		//	Reconstruction::devicereset();
+
+		//	return attenu;
 		//}
+		//else {
 
-		//Reconstruction::devicereset();
-
-		//return attenu;
-
-		sysmat = generate_sysmat(false, false);
+		sysmat = generate_sysmat(true, false);
 		//sysmat = *hoge;
 
 		std::cout << "\nStart iteration";
@@ -72,31 +77,48 @@ namespace Reconstruction {
 			prevsum = Reconstruction::sum_array(attenu, nd * nd);
 
 			if (block == true) { //block-ART
+
 				for (int i = 0; i < nv * nd / block_size; i++) {
 
 					_sysmatblock = (*sysmat).Create_blockmat(i * block_size, block_size);
 					//_sysmatblock = *(sysmat.Create_blockmat(i * block_size, block_size));
 
-					for (int j = 0; j < nd * nd; j++) {
-						imgdiff[j] = 0;
+					if (usegpu) {
+						for (int j = 0; j < nd * nd; j++) {
+							imgdiff[j] = 0;
+						}
+
+						//imgdiff_art = Eigen::VectorXf::Zero(nd * nd);
+						for (int j = 0; j < block_size; j++) {
+							(*_sysmatblock).Extract_row_dense(j, nd * nd, _sysmatrow);
+							calc_imgdiff(imgdiff, _sysmatrow, attenu, _sino[i * block_size + j], nd * nd);
+							Reconstruction::mul_array1(imgdiff, nd, nd * nd);
+						}
 					}
+					else {
+						for (int j = 0; j < nd * nd; j++) {
+							imgdiff[j] = 0;
+						}
 
-					//imgdiff_art = Eigen::VectorXf::Zero(nd * nd);
-					for (int j = 0; j < block_size; j++) {
+						//imgdiff_art = Eigen::VectorXf::Zero(nd * nd);
+						for (int j = 0; j < block_size; j++) {
 
-						(*_sysmatblock).Extract_row_dense(j, nd * nd, _sysmatrow);
-						calc_imgdiff(imgdiff, _sysmatrow, attenu, _sino[i * block_size + j], nd * nd);
-						//imgdiff = imgdiff + ((sys_atn - _sino[i * block_num + j]) / sys_sys) * _sysmatrow;
+							(*_sysmatblock).Extract_row_dense(j, nd * nd, _sysmatrow);
+							//std::cout << "check denserow: " << _sysmatrow[100];
+							calc_imgdiff(imgdiff, _sysmatrow, attenu, _sino[i * block_size + j], nd * nd);
+							Reconstruction::mul_array1(imgdiff, nd, nd * nd);
+							//imgdiff = imgdiff + ((sys_atn - _sino[i * block_num + j]) / sys_sys) * _sysmatrow;
+						}
 					}
 
 					calc_attenu(attenu, imgdiff, nd * nd);
 					//attenu = attenu - (relpar / block_num) * imgdiff;
 
-
-
 				}
+
+					
 				diff = Reconstruction::sum_array(attenu, nd * nd) - prevsum;
-				std::cout << "\rIteration:" << itrcount << ", diff:" << diff << string(10, ' ');
+				std::cout << "\nIteration:" << itrcount << ", sum:" << Reconstruction::sum_array(attenu, nd * nd) << ", diff:" << diff << std::string(10, ' ');
 			}
 
 			itrcount++;
@@ -111,6 +133,7 @@ namespace Reconstruction {
 		Reconstruction::devicereset();
 
 		return attenu;
+		//}
 	}
 
 	void IterationRec::calc_imgdiff(float* idiff, float* smr, float* atn, float sn, int size) const {
@@ -137,10 +160,10 @@ namespace Reconstruction {
 
 		int nonzero = 0;		//the number of nonzero elements
 
-		std::cout << "\nStart Generating System Matrix(GPU) " << nd << " " << nv << "\n";
+		//std::cout << "\nStart Generating System Matrix(GPU) " << begin << " / " << nv << "\n";
 		nonzero = Reconstruction::calc_sysmat2(elements.get(), rowptr.get(), colind.get(), begin, size, nv, nd, center, geometry_normalized->sdd);
 		rowptr[nd * size] = nonzero;
-		std::cout << "\nSystem matrix generated!(GPU), nonzero = " << nonzero << "\n";
+		//std::cout << "\nSystem matrix generated!(GPU), nonzero = " << nonzero << "\n";
 
 		std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(elements, rowptr, colind, nonzero));
 		return sysmatptr;
@@ -178,7 +201,7 @@ namespace Reconstruction {
 		int nonzero = 0;		//the number of nonzero elements
 
 
-		ofstream ofs("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sysmat.csv"); //for debug
+		std::ofstream ofs("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sysmat.csv"); //for debug
 
 
 		center = nd / 2;
