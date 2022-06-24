@@ -79,10 +79,14 @@ int main(int argc, char *argv[]) {
 	//}
 
 	if (argc == 1) {
-		projdir   = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\ideal6bin\\obj";
-		bgdir     = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\ideal6bin\\bg";
-		matdir    = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\material\\1keV";
-		sourcedir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\source\\ideal6bin\\1keV";
+		//projdir   = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\ideal6bin\\obj";
+		//bgdir     = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\ideal6bin\\bg";
+		//matdir    = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\material\\1keV";
+		//sourcedir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\source\\ideal6bin\\1keV";
+		projdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\eq5bin\\obj";
+		bgdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\eq5bin\\bg";
+		matdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\material\\0.1keV";
+		sourcedir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\source\\s5bin\\0.1keV";
 	}
 
 	std::vector<std::string> objpaths, bgpaths;
@@ -194,14 +198,14 @@ int main(int argc, char *argv[]) {
 	{
 		matdec = new Reconstruction::IterativeMatDec(pcsg, &geo, &mat, source, blockproj);
 		std::cout << "\nactivate Material decomposition";
-		resultfracvec = (*matdec).reconstruction(2);
+		resultfracvec = (*matdec).reconstruction(1);
 
 		nd = (*pcsg).get_nd();
 		nv = (*pcsg).get_nv();
 
 		for (int m = 0; m < mat.get_matlist().size(); m++) {
 
-			std::string outfilename = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\material_decomposition\\";
+			std::string outfilename = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\material_decomposition\\output1";
 			outfilename += mat.get_matlist()[m].name;
 			outfilename += ".csv";
 			std::ofstream ofs(outfilename);

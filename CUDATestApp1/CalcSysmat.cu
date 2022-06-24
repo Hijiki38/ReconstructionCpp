@@ -428,7 +428,7 @@ namespace Reconstruction {
 					for (int x = 0; x < nd; x++)
 					{
 						area = tmpmat[y * nd + x];
-						if (area != 0 && (x - center) * (x - center) + (y - center) * (y - center) > center * center ) {
+						if (area != 0 && (x - center) * (x - center) + (y - center) * (y - center) < center * center) {
 							elem[nonzero] = area;
 							colind[nonzero] = nd * y + x;
 							if (firstelem) {

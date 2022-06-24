@@ -54,6 +54,7 @@ namespace Reconstruction {
 
 		std::cout << "start gen sysmat" << std::endl;
 
+		//sysmat = generate_sysmat(true, true);
 		sysmat = generate_sysmat(true, false);
 
 
@@ -80,8 +81,14 @@ namespace Reconstruction {
 
 				diff = 0;
 
+				for (int i = 0; i < nv * nd / block_size; i+=10) {
 				//for (int i = 0; i < nv * nd / block_size; i++) {
-				for (int i = 0; i < nv * nd / block_size; i++) {
+
+					for (int j = 0; j < nd * nd; j++) {
+						for (int k = 0; k < nm; k++) {
+							matfractmp[j][k] = matfrac[j][k];
+						}
+					}
 
 					_sysmatblock = (*sysmat).Create_blockmat(i * block_size, block_size);
 						
@@ -98,13 +105,40 @@ namespace Reconstruction {
 					calc_imgdiff_gpu(sysmat1proj, i * block_size);
 
 					for (int j = 0; j < nd*nd; j++) {
+
+
 						for (int k = 0; k < nm; k++) {
 							diff += imgdiff[j][k];
-							matfracprev[j][k] = matfrac[j][k];
+
 							matfrac[j][k] -= imgdiff[j][k];
+							//if (matfrac[j][k] < 0 || (j / nd - nd / 2) * (j / nd - nd / 2) + (j % nd - nd / 2) * (j % nd - nd / 2) > (nd / 2) * (nd / 2)) matfrac[j][k] = 0;
 							if (matfrac[j][k] < 0) matfrac[j][k] = 0;
-							if (matfrac[j][k] > 100) matfrac[j][k] = 100;
+							if (matfrac[j][k] > 10000) matfrac[j][k] = 10000;
+							matfracprev[j][k] = matfractmp[j][k];
+
 						}	
+					}
+
+					int count;
+					//for debug
+					for (int m = 0; m < nm; m++) {
+
+						std::string outfilename = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\material_decomposition\\output1";
+						outfilename += mat->get_matlist()[m].name;
+						outfilename += std::to_string(i);
+						outfilename += ".csv";
+						std::ofstream ofs(outfilename);
+
+						count = 0;
+						for (int k = 0; k < nd; k++)
+						{
+							for (int j = 0; j < nd; j++)
+							{
+								ofs << matfrac[count][m] << ',';
+								count++;
+							}
+							ofs << '\n';
+						}
 					}
 
 					//if (i > 19) break;
@@ -465,13 +499,13 @@ namespace Reconstruction {
 			gamma[i] = 0.01;
 		}
 
-		eta[0] = 0.0001; //air
+		eta[0] = 0.001; //air
 		eta[1] = 0.001; //al
 		eta[2] = 0.001; //c
 		eta[3] = 0.001; //ti
 		eta[4] = 0.001; //cu
 
-		gamma[0] = 0.1;
+		gamma[0] = 0.01;
 		gamma[1] = 0.01;
 		gamma[2] = 0.01;
 		gamma[3] = 0.01;
@@ -527,7 +561,9 @@ namespace Reconstruction {
 		//}
 
 		//take negative and exp of lintg
-		std::cout << "lintg[100][800] = " << lintg[100][800] << std::endl;
+		std::cout << "lintg[1][8] = " << lintg[1][8] << std::endl;
+
+
 		for (int i = 0; i < block_size; i++) {
 			for (int e = 0; e < ne; e++) {
 				if (i % 50 == 0 && e % 100 == 0) { //lintg[i][e] != 0 &&
@@ -594,15 +630,15 @@ namespace Reconstruction {
 		std::cout << "calc grad q: ";
 		calc_gradq(grad_q, smr, sino->get_sinovec(), nbar, grad_n, nd, block_size, nb, nm, v_begin, pixsize);
 
-		//for (int j = 0; j < nd * nd; j++) {
-		//	for (int k = 0; k < nm; k++) {
-		//		if (grad_q[j][k] != 0 && j % 10000 == 0) {
-		//			std::cout << "grad_q " << j << " " << k << ":" << grad_q[j][k] << " ";
-		//			std::cout << std::endl;
-		//		}
-		//		
-		//	}
-		//}
+		for (int j = 0; j < nd * nd; j++) {
+			for (int k = 0; k < nm; k++) {
+				if (grad_q[j][k] != 0 && j % 50000 == 0) {
+					std::cout << "grad_q " << j << " " << k << ":" << grad_q[j][k] << " ";
+					std::cout << std::endl;
+				}
+				
+			}
+		}
 		std::cout << "completed." << std::endl;
 
 		// grad s
@@ -622,19 +658,19 @@ namespace Reconstruction {
 					grad_s[j][k] += eta[k] * (w / gamma[k]) * tmp;
 					if (!sfrag && std::abs((2 * matfrac[j][k] - matfracprev[j][k] - matfracprev[l][k]) / gamma[k]) < 10) {
 						sfrag = true;
-						std::cout << "s OK. first:" << j << " " << k << std::endl;
+						//std::cout << "s OK. first:" << j << " " << k << std::endl;
 					}
 				}
 			}
 		}
-		//for (int j = 0; j < nd * nd; j += 1) {
-		//	for (int k = 0; k < nm; k++) {
-		//		if (grad_s[j][k] != 0 && j % 10000 == 0) {
-		//			std::cout << "grad_s " << j << " " << k << ":" << grad_s[j][k] << " ";
-		//			std::cout << std::endl;
-		//		}
-		//	}
-		//}
+		for (int j = 0; j < nd * nd; j += 1) {
+			for (int k = 0; k < nm; k++) {
+				if (grad_s[j][k] != 0 && j % 50000 == 0) {
+					std::cout << "grad_s " << j << " " << k << ":" << grad_s[j][k] << " ";
+					std::cout << std::endl;
+				}
+			}
+		}
 		std::cout << "completed." << std::endl;
 
 		//hessian q
@@ -648,13 +684,18 @@ namespace Reconstruction {
 
 		calc_hesseq(h, source, smr, sino->get_sinovec(), nbar, matatn, lintg, suma, nd, block_size, nb, ne, nm, v_begin, pixsize);
 
-		//std::cout << "h[0]" << std::endl;
-		//for (int j = 0; j < nm; j++) {
-		//	for (int k = 0; k < nm; k++) {
-		//		std::cout << h[0][j][k] << ", ";
-		//	}
-		//	std::cout << std::endl;
-		//}
+		for (int j = 0; j < block_size; j++) {
+			if (smr[j][0] != 0) 		std::cout << "nonzero smr[0]:" << smr[j][0] << " at " << j << std::endl;
+		}
+
+
+		std::cout << "h[0]" << std::endl;
+		for (int j = 0; j < nm; j++) {
+			for (int k = 0; k < nm; k++) {
+				std::cout << h[0][j][k] << ", ";
+			}
+			std::cout << std::endl;
+		}
 		std::cout << "completed." << std::endl;
 
 		//h[j][k][m] += smr[i][j] * (n[i][b] / nbar[i][b]) * suma[i] * source[v_begin + i][b][e] * matatn[k][e] * matatn[m][e] * lintg[i][e];
@@ -731,8 +772,8 @@ namespace Reconstruction {
 					if (tmp > MAX_TANH) tmp = MAX_TANH;
 					if (tmp < MIN_TANH) tmp = MIN_TANH;
 					//h[j][k][k] += eta[k] * (2 * w / std::sqrt(gamma[k])) * (1 - std::pow(std::tanh((2 * matfrac[j][k] - matfracprev[j][k] - matfracprev[l][k]) / gamma[k]), 2));
-					//h[j][k][k] += eta[k] * (2 * w / std::sqrt(gamma[k])) * (1 - std::pow(tmp, 2));
-					hs[j][k][k] += eta[k] * (2 * w / std::sqrt(gamma[k])) * (1 - std::pow(tmp, 2));
+					h[j][k][k] += eta[k] * (2 * w / std::sqrt(gamma[k])) * (1 - std::pow(tmp, 2));
+					//hs[j][k][k] += eta[k] * (2 * w / std::sqrt(gamma[k])) * (1 - std::pow(tmp, 2));
 					if (!sfrag && std::abs((2 * matfrac[j][k] - matfracprev[j][k] - matfracprev[l][k]) / gamma[k]) < 10) {
 						sfrag = true;
 						std::cout << "s OK. first:" << j << " " << k << std::endl;
@@ -764,10 +805,11 @@ namespace Reconstruction {
 		std::cout << "invert hessian: ";
 		std::vector<int> hesselist;
 		for (int j = 0; j < nd * nd; j++) {
-			if (gaussian_elim(h[j], h_inv[j], nm) == 0) {
-				hesselist.push_back(j);
-			}
-			gaussian_elim(hs[j], hs_inv[j], nm);
+			//if (gaussian_elim(h[j], h_inv[j], nm) == 0) {
+			//	hesselist.push_back(j);
+			//}
+			//gaussian_elim(hs[j], hs_inv[j], nm);
+			gaussian_elim(h[j], h_inv[j], nm);
 			
 			//if(j < 100) std::cout << "inv:" << j << std::endl;
 			//if (j > 261118) {
@@ -795,9 +837,14 @@ namespace Reconstruction {
 		//update material images(by Newton method)
 		std::cout << "update images: " ;
 
-		for (const auto& j : hesselist) {
+		for (int j = 0; j < nd * nd; j++) {
 			for (int k = 0; k < nm; k++) {
 				imgdiff[j][k] = 0;
+			}
+		}
+
+		for (const auto& j : hesselist) {
+			for (int k = 0; k < nm; k++) {
 				for (int m = 0; m < nm; m++) {
 					imgdiff[j][k] += grad_q[j][k] * h_inv[j][k][m];
 				}
@@ -806,13 +853,13 @@ namespace Reconstruction {
 
 		for (int j = 0; j < nd * nd; j++) {
 			for (int k = 0; k < nm; k++) {
-				imgdiff[j][k] = 0;
+				//imgdiff[j][k] = 0;
 				for (int m = 0; m < nm; m++) {
-					//imgdiff[j][k] += (grad_q[j][k] + grad_s[j][k]) * h_inv[j][k][m];
-					//imgdiff[j][k] += grad_q[j][k] * h_inv[j][k][m] + grad_s[j][k] * hs_inv[j][k][m];
-					imgdiff[j][k] += grad_s[j][k] * hs_inv[j][k][m];
-					//if((grad_q[j][k] + grad_s[j][k]) != 0) 
-					if(j >= 11406 && j <= 11408) std::cout << "j,k,m, imgdiff, grad, hinv:" << j << ", " << k << ", " << m << ", " << imgdiff[j][k] << ", " << grad_q[j][k] + grad_s[j][k] << ", " << h_inv[j][k][m] << std::endl;
+					imgdiff[j][k] += (grad_q[j][k] + grad_s[j][k]) * h_inv[j][k][m];
+					////imgdiff[j][k] += grad_q[j][k] * h_inv[j][k][m] + grad_s[j][k] * hs_inv[j][k][m];
+					//imgdiff[j][k] += grad_s[j][k] * hs_inv[j][k][m];
+					////if((grad_q[j][k] + grad_s[j][k]) != 0) 
+					if(j < 10) std::cout << "j,k,m, imgdiff, grad, hinv:" << j << ", " << k << ", " << m << ", " << imgdiff[j][k] << ", " << grad_q[j][k] + grad_s[j][k] << ", " << h_inv[j][k][m] << std::endl;
 				}
 			}
 		}
@@ -1085,7 +1132,9 @@ namespace Reconstruction {
 		int nonzero = 0;		//the number of nonzero elements
 
 
-		std::ofstream ofs("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sysmat.csv"); //for debug
+		std::ofstream ofse("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sysmat\\elem.csv"); //for debug
+		std::ofstream ofsr("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sysmat\\rowptr.csv"); //for debug
+		std::ofstream ofsc("C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\sysmat\\colind.csv"); //for debug
 
 
 		center = nd / 2;
@@ -1095,10 +1144,37 @@ namespace Reconstruction {
 
 		if (use_gpu) {
 			std::cout << "\nStart Generating System Matrix(GPU) " << nd << " " << nv << "\n";
-			//nonzero = Reconstruction::calc_sysmat2(elements, rowptr, colind, 0, nv, nd, center, geometry_normalized->sdd);
+			//nonzero = Reconstruction::calc_sysmat2(elements.get(), rowptr.get(), colind.get(), 0, nv, nd, center, geometry_normalized->sdd);
 			nonzero = Reconstruction::calc_sysmat(elements.get(), rowptr.get(), colind.get(), nv, nd, center, geometry_normalized->sdd);
 			rowptr[nd * nv] = nonzero;
 			std::cout << "\nSystem matrix generated!(GPU), nonzero = " << nonzero << "\n";
+
+			
+			if (write_sysmat) {
+				int nlcount = 0;
+				for (int i = 0; i < nonzero; i++, nlcount++) {
+					ofse << elements[i];
+					ofsc << colind[i];
+					if (nlcount >= 10000) {
+						ofse << ",";
+						ofsc << ",";
+					}
+					else {
+						ofse << std::endl;
+						ofsc << std::endl;
+					}
+				}
+				nlcount = 0;
+				for (int i = 0; i < nd * nv + 1; i++, nlcount++) {
+					ofsr << rowptr[i];
+					if (nlcount >= 10000) {
+						ofsr << ",";
+					}
+					else {
+						ofsr << std::endl;
+					}
+				}
+			}
 
 			std::unique_ptr<SparseMatrix> sysmatptr(new SparseMatrix(elements, rowptr, colind, nonzero));
 			return sysmatptr;
@@ -1161,15 +1237,15 @@ namespace Reconstruction {
 								nonzero++;
 							}
 
-							if (write_sysmat) {
-								ofs << area << ", ";
-							}
+							//if (write_sysmat) {
+							//	ofs << area << ", ";
+							//}
 						}
 					}
 
-					if (write_sysmat) {
-						ofs << "\n";
-					}
+					//if (write_sysmat) {
+					//	ofs << "\n";
+					//}
 				}
 
 				theta += 2 * PI / nv;

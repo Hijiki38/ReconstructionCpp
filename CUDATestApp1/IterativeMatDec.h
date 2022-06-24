@@ -20,7 +20,7 @@
 
 
 
-static const int MAXMATERIALS_MD = 45000000;
+static const int MAXMATERIALS_MD = 450000000;// 1800000000;
 static const float MAX_LINTG = 1e+15;
 static const float MIN_LINTG = 1e-10;
 static const float MAX_TANH = 0.9999999;
@@ -43,7 +43,7 @@ namespace Reconstruction {
 
 		std::unique_ptr<SparseMatrix> sysmat;
 		//DenseMatrix matfrac, matfracprev, imgdiff, matatn, * source;
-		float **matfrac, **matfracprev, **imgdiff, **matatn, ***source;
+		float **matfrac, **matfracprev, **matfractmp, **imgdiff, **matatn, ***source;
 
 
 		//float relpar;// = 1.05;
@@ -96,6 +96,7 @@ namespace Reconstruction {
 
 			matfrac = (float**)malloc(nd * nd * sizeof(float*));
 			matfracprev = (float**)malloc(nd * nd * sizeof(float*));
+			matfractmp = (float**)malloc(nd * nd * sizeof(float*));
 			imgdiff = (float**)malloc(nd * nd * sizeof(float*));
 			matatn = (float**)malloc(nm * sizeof(float*));
 			source = (float***)malloc(nd * nv * sizeof(float**)); // ndxnv X nb X ne matrix
@@ -124,10 +125,12 @@ namespace Reconstruction {
 			for (int i = 0; i < nd * nd; i++) {
 				matfrac[i] = (float*)malloc(nm * sizeof(float));
 				matfracprev[i] = (float*)malloc(nm * sizeof(float));
+				matfractmp[i] = (float*)malloc(nm * sizeof(float));
 				imgdiff[i] = (float*)malloc(nm * sizeof(float));
 				for (int j = 0; j < nm; j++) {
 					matfrac[i][j] = 1;// 1 / nm;
 					matfracprev[i][j] = 1;// 1 / nm;
+					matfractmp[i][j] = 1;// 1 / nm;
 					imgdiff[i][j] = 0;
 				}
 			}
