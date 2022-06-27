@@ -81,12 +81,18 @@ int main(int argc, char *argv[]) {
 	if (argc == 1) {
 		//projdir   = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\ideal6bin\\obj";
 		//bgdir     = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\ideal6bin\\bg";
-		//matdir    = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\material\\1keV";
-		//sourcedir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\source\\ideal6bin\\1keV";
-		projdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\eq5bin\\obj";
-		bgdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\eq5bin\\bg";
+		//matdir    = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\material\\0.1keV";
+		//sourcedir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\source\\ideal6bin\\0.1keV";
+		// 
+		//projdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\eq5bin\\obj";
+		//bgdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\eq5bin\\bg";
+		//matdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\material\\0.1keV";
+		//sourcedir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\source\\s5bin\\0.1keV";
+		// 
+		projdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\sd10bin\\obj";
+		bgdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\sd10bin\\bg";
 		matdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\material\\0.1keV";
-		sourcedir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\source\\s5bin\\0.1keV";
+		sourcedir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\source\\sd10bin";
 	}
 
 	std::vector<std::string> objpaths, bgpaths;
