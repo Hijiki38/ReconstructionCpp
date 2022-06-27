@@ -35,7 +35,6 @@ int main(int argc, char *argv[]) {
 
 	std::string inpath, projdir, bgdir, matdir, sourcedir;
 	//Reconstruction::geometry geo = {true, 205.7, 1100.0, -0.9345, 0.01869}; //sod, sdd, cor(pixels), pixsize
-	//Reconstruction::geometry geo = { true, 100.0, 610.0, 63, 0.01639 };
 	Reconstruction::geometry geo = { true, 400.0, 800.0, 0, 0.005 };
 	Reconstruction::sinogram* sg;
 	Reconstruction::PCCTsinogram* pcsg;
