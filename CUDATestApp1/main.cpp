@@ -204,7 +204,7 @@ int main(int argc, char *argv[]) {
 	{
 		matdec = new Reconstruction::IterativeMatDec(pcsg, &geo, &mat, source, blockproj);
 		std::cout << "\nactivate Material decomposition";
-		resultfracvec = (*matdec).reconstruction(1);
+		resultfracvec = (*matdec).reconstruction(2);
 
 		nd = (*pcsg).get_nd();
 		nv = (*pcsg).get_nv();

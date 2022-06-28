@@ -81,8 +81,8 @@ namespace Reconstruction {
 
 				diff = 0;
 
-				for (int i = 0; i < nv * nd / block_size; i+=10) {
-				//for (int i = 0; i < nv * nd / block_size; i++) {
+				//for (int i = 0; i < nv * nd / block_size; i+=10) {
+				for (int i = 0; i < nv * nd / block_size; i++) {
 
 					for (int j = 0; j < nd * nd; j++) {
 						for (int k = 0; k < nm; k++) {
@@ -121,25 +121,25 @@ namespace Reconstruction {
 
 					int count;
 					//for debug
-					for (int m = 0; m < nm; m++) {
+					//for (int m = 0; m < nm; m++) {
 
-						std::string outfilename = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\material_decomposition\\output1";
-						outfilename += mat->get_matlist()[m].name;
-						outfilename += std::to_string(i);
-						outfilename += ".csv";
-						std::ofstream ofs(outfilename);
+					//	std::string outfilename = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\material_decomposition\\output1";
+					//	outfilename += mat->get_matlist()[m].name;
+					//	outfilename += std::to_string(i);
+					//	outfilename += ".csv";
+					//	std::ofstream ofs(outfilename);
 
-						count = 0;
-						for (int k = 0; k < nd; k++)
-						{
-							for (int j = 0; j < nd; j++)
-							{
-								ofs << matfrac[count][m] << ',';
-								count++;
-							}
-							ofs << '\n';
-						}
-					}
+					//	count = 0;
+					//	for (int k = 0; k < nd; k++)
+					//	{
+					//		for (int j = 0; j < nd; j++)
+					//		{
+					//			ofs << matfrac[count][m] << ',';
+					//			count++;
+					//		}
+					//		ofs << '\n';
+					//	}
+					//}
 
 					//if (i > 19) break;
 					//break;
