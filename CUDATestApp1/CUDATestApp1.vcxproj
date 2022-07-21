@@ -146,6 +146,7 @@
     <ClCompile Include="ART.cpp" />
     <ClCompile Include="FBP.cpp" />
     <ClCompile Include="IterativeMatDec.cpp" />
+    <ClCompile Include="IterativeMatDecCustom.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MLEM.cpp" />
     <ClCompile Include="PCCTsinogram.cpp" />
@@ -198,6 +199,7 @@
     <ClInclude Include="DenseMatrix.h" />
     <ClInclude Include="geometry.h" />
     <ClInclude Include="IterativeMatDec.h" />
+    <ClInclude Include="IterativeMatDecCustom.h" />
     <ClInclude Include="materials.h" />
     <ClInclude Include="MLEM.h" />
     <ClInclude Include="PCCTsinogram.h" />

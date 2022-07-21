@@ -66,6 +66,9 @@
     <ClCompile Include="spectrum.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="IterativeMatDecCustom.cpp">
+      <Filter>ソース ファイル\Algorithm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sinogram.h">
@@ -121,6 +124,9 @@
     </ClInclude>
     <ClInclude Include="CalcMat.cuh">
       <Filter>ヘッダー ファイル\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="IterativeMatDecCustom.h">
+      <Filter>ヘッダー ファイル\Algorithm</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -20,9 +20,14 @@ namespace Reconstruction {
 	//__global__ void hesseq(float* source, float* sysmat, float* n, float* nbar, float* matatn, float* lintg, float* suma, float* res, int nd, int ni, int nb, int ne, int nm);
 
 	__global__ void gradq(float* sysmat, float* n, float* nbar, float* grad_n, float* res, const int nd, const int ni, const int nb, const int nm);
+	__global__ void gradq2_1(float* source, float* matatn, float* lintg, float* res, const int ni, const int nb, const int ne, const int nm);
+	__global__ void gradq2_2(float* sysmat, float* n, float* nbar, float* suma, float* tmp, float* res, const int nd, const int ni, const int nb, const int nm);
 
 	__global__ void hesseq1(float* source, float* matatn, float* lintg, float* res, const int ni, const int nb, const int ne, const int nm);
 	__global__ void hesseq2(float* sysmat, float* n, float* nbar, float* suma, float* tmp, float* res, const int nd, const int ni, const int nb, const int nm);
+
+	__global__ void hesseqp(float* source, float* matatn, float* lintg, float* res, const int ni, const int nb, const int ne, const int nm);
+	//__global__ void hesseqp2(float* nbar, float* nbard, float* suma, float* tmp, float* res, const int nd, const int ni, const int nb, const int nm);
 
 	void calc_product(float* a, float* b, float* res, int nxa, int nya, int nxb);
 	float** calc_product(float** a, float** b, int nxa, int nya, int nxb);
@@ -33,13 +38,18 @@ namespace Reconstruction {
 	float** calc_T(float** a, int nx, int ny);
 
 	float** calc_n(float*** source, int ni, int nb, int ne, int v_begin);
+	void calc_nbard(float** res, float*** source, float** lintg, float* bnmean, int nd, int ni, int nb, int ne, int nm, int v_begin);
 
 	void calc_lintg(float** res, float** sysmat, float** matfrac, float** matatn, int nd, int ni, int ne, int nm, float pixsize);
 
 	void calc_gradq(float** res, float** sysmat, float* n, float** nbar, float*** grad_n, int nd, int ni, int nb, int nm, int v_begin, float pixsize);
+	void calc_gradq2(float** res, float** sysmat, float*** source, float* n, float** nbar, float** matatn, float** lintg, float* suma, int nd, int ni, int nb, int ne, int nm, int v_begin, float pixsize);
+
+	float calc_gradp(float* n, float** nbar, float** nbard, int nd, int ni, int nb, int ne, int v_begin);
 
 	void calc_hesseq(float*** res, float*** source, float** sysmat, float* n, float** nbar, float** matatn, float** lintg, float* suma, int nd, int ni, int nb, int ne, int nm, int v_begin, float pixsize);
-
+	void calc_hesseqp(float* res, float*** source, float** nbar, float** nbard, float** matatn, float** lintg, float* suma, int nd, int ni, int nb, int ne, int nm, int v_begin);
+	float calc_hessep(float* n, float** nbar, float** nbard, int ni, int nb);
 		//h[j][k][m] += smr[i][j] * (n[i][b] / nbar[i][b]) * suma[i] * source[v_begin + i][b][e] * matatn[k][e] * matatn[m][e] * lintg[i][e];
 
 }

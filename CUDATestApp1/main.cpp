@@ -12,6 +12,7 @@
 #include "geometry.h"
 #include "crtdbg.h"
 #include "IterativeMatDec.h"
+#include "IterativeMatDecCustom.h"
 
 #define malloc(X) _malloc_dbg(X,_NORMAL_BLOCK,__FILE__,__LINE__)
 #define new ::new(_NORMAL_BLOCK, __FILE__, __LINE__)
@@ -23,6 +24,7 @@ enum class rec_name {
 	ART,
 	MLEM,
 	MATDEC,
+	MDCUST,
 };
 
 int main(int argc, char *argv[]) {
@@ -43,6 +45,7 @@ int main(int argc, char *argv[]) {
 	Reconstruction::ART* art;
 	Reconstruction::MLEM* mlem;
 	Reconstruction::IterativeMatDec* matdec;
+	Reconstruction::IterativeMatDecCustom* mdc;
 	VectorXf* result = nullptr;
 	float* resultvec;
 	float** resultfracvec;
@@ -89,10 +92,15 @@ int main(int argc, char *argv[]) {
 		//matdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\material\\0.1keV";
 		//sourcedir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\source\\s5bin\\0.1keV";
 		// 
-		projdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\sd10bin\\obj";
-		bgdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\sd10bin\\bg";
-		matdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\material\\0.1keV";
-		sourcedir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\source\\sd10bin";
+		//projdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\sd10bin\\obj";
+		//bgdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\sd10bin\\bg";
+		//matdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\material\\0.1keV";
+		//sourcedir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\source\\sd10bin";
+
+		projdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\sd6bin\\obj";
+		bgdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\sd6bin\\bg";
+		matdir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\material\\debug0.1keV";
+		sourcedir = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\source\\sd6bin";
 	}
 
 	std::vector<std::string> objpaths, bgpaths;
@@ -204,7 +212,36 @@ int main(int argc, char *argv[]) {
 	{
 		matdec = new Reconstruction::IterativeMatDec(pcsg, &geo, &mat, source, blockproj);
 		std::cout << "\nactivate Material decomposition";
-		resultfracvec = (*matdec).reconstruction(2);
+		resultfracvec = (*matdec).reconstruction(1);
+
+		nd = (*pcsg).get_nd();
+		nv = (*pcsg).get_nv();
+
+		for (int m = 0; m < mat.get_matlist().size(); m++) {
+
+			std::string outfilename = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\material_decomposition\\output1";
+			outfilename += mat.get_matlist()[m].name;
+			outfilename += ".csv";
+			std::ofstream ofs(outfilename);
+
+			count = 0;
+			for (int i = 0; i < nd; i++)
+			{
+				std::cout << "\r writing..  " << i << " / " << nd - 1;
+				for (int j = 0; j < nd; j++)
+				{
+					ofs << resultfracvec[count][m] << ',';
+					count++;
+				}
+				ofs << '\n';
+			}
+		}
+	}
+	else if (mode == static_cast<int>(rec_name::MDCUST))
+	{
+		mdc = new Reconstruction::IterativeMatDecCustom(pcsg, &geo, &mat, source, blockproj);
+		std::cout << "\nactivate Material decomposition Custom";
+		resultfracvec = (*mdc).reconstruction(1);
 
 		nd = (*pcsg).get_nd();
 		nv = (*pcsg).get_nv();

@@ -52,6 +52,28 @@ namespace Reconstruction {
 		//exit(0);
 		//test
 
+		//for initializing image
+		//std::string initimgname = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\input\\fourmetals_simulation\\proj\\initialimg2.csv";
+		//std::ofstream iifs(initimgname);
+
+		//std::ifstream stream(initimgname);
+		//std::string line;
+
+		//int counttmp = 0;
+
+		//while (getline(stream, line)) {
+		//	std::vector<std::string> strs = Reconstruction::splitstring(line, ',');
+		//	for (int i = 0; i < strs.size(); i++) {
+		//		for (int j = 0; j < nm; j++) {
+		//			matfrac[counttmp % (nd * nd)][j] = stof(strs[i]);
+		//		}	
+		//		//std::cout << "j k; " << counttmp % (nd * nd) << "  " << counttmp / (nd * nd) << std::endl;
+		//		counttmp++;
+		//	}
+		//}
+
+
+
 		std::cout << "start gen sysmat" << std::endl;
 
 		//sysmat = generate_sysmat(true, true);
@@ -69,6 +91,8 @@ namespace Reconstruction {
 
 		std::cout << "\nStart iteration";
 
+		bool eachproj = false; //update image for each projection
+
 		itrcount = 0;
 		while (itrcount < itr)
 		{
@@ -81,14 +105,27 @@ namespace Reconstruction {
 
 				diff = 0;
 
-				//for (int i = 0; i < nv * nd / block_size; i+=10) {
-				for (int i = 0; i < nv * nd / block_size; i++) {
-
+				if (!eachproj) {
 					for (int j = 0; j < nd * nd; j++) {
 						for (int k = 0; k < nm; k++) {
 							matfractmp[j][k] = matfrac[j][k];
 						}
 					}
+				}
+
+
+				for (int i = 0; i < nv * nd / block_size; i+=10) {
+				//for (int i = 0; i < nv * nd / block_size; i++) {
+
+					//each proj ver
+					if (eachproj) {
+						for (int j = 0; j < nd * nd; j++) {
+							for (int k = 0; k < nm; k++) {
+								matfractmp[j][k] = matfrac[j][k];
+							}
+						}
+					}
+
 
 					_sysmatblock = (*sysmat).Create_blockmat(i * block_size, block_size);
 						
@@ -105,45 +142,82 @@ namespace Reconstruction {
 					calc_imgdiff_gpu(sysmat1proj, i * block_size);
 
 					for (int j = 0; j < nd*nd; j++) {
-
-
 						for (int k = 0; k < nm; k++) {
 							diff += imgdiff[j][k];
 
-							matfrac[j][k] -= imgdiff[j][k];
-							//if (matfrac[j][k] < 0 || (j / nd - nd / 2) * (j / nd - nd / 2) + (j % nd - nd / 2) * (j % nd - nd / 2) > (nd / 2) * (nd / 2)) matfrac[j][k] = 0;
-							if (matfrac[j][k] < 0) matfrac[j][k] = 0;
-							if (matfrac[j][k] > 10000) matfrac[j][k] = 10000;
-							matfracprev[j][k] = matfractmp[j][k];
+							//all proj ver
+							if (eachproj) {
+								matfrac[j][k] -= imgdiff[j][k] / nv;
+								//if (matfrac[j][k] < 0 || (j / nd - nd / 2) * (j / nd - nd / 2) + (j % nd - nd / 2) * (j % nd - nd / 2) > (nd / 2) * (nd / 2)) matfrac[j][k] = 0;
+								if (matfrac[j][k] < 0) matfrac[j][k] = 0;
+								//if (matfrac[j][k] < -10000) matfrac[j][k] = -10000;
+								if (matfrac[j][k] > 1000) matfrac[j][k] = 1000;
+								matfracprev[j][k] = matfractmp[j][k];
+							}
+							else {
+								imgdiffsum[j][k] += imgdiff[j][k] / nv;
+							}
+
+
+
 
 						}	
 					}
 
 					int count;
 					//for debug
-					//for (int m = 0; m < nm; m++) {
+					for (int m = 0; m < nm; m++) {
 
-					//	std::string outfilename = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\material_decomposition\\output1";
-					//	outfilename += mat->get_matlist()[m].name;
-					//	outfilename += std::to_string(i);
-					//	outfilename += ".csv";
-					//	std::ofstream ofs(outfilename);
+						std::string outfilename = "C:\\Users\\takum\\Dropbox\\Aoki_Lab\\util\\Reconstructor\\output\\material_decomposition\\output1";
+						outfilename += mat->get_matlist()[m].name;
+						outfilename += std::to_string(i);
+						outfilename += ".csv";
+						std::ofstream ofs(outfilename);
 
-					//	count = 0;
-					//	for (int k = 0; k < nd; k++)
-					//	{
-					//		for (int j = 0; j < nd; j++)
-					//		{
-					//			ofs << matfrac[count][m] << ',';
-					//			count++;
-					//		}
-					//		ofs << '\n';
-					//	}
-					//}
+						count = 0;
+						for (int k = 0; k < nd; k++)
+						{
+							for (int j = 0; j < nd; j++)
+							{
+								if (eachproj) {
+									ofs << matfrac[count][m] << ',';
+								}
+								else {
+									ofs << matfrac[count][m] - imgdiffsum[count][m] << ',';
+								}
+								
+								count++;
+							}
+							ofs << '\n';
+						}
+					}
 
 					//if (i > 19) break;
 					//break;
 				}
+
+				float disx, disy;
+
+				if (eachproj) {
+
+				}
+				else {
+					for (int j = 0; j < nd * nd; j++) {
+						for (int k = 0; k < nm; k++) {
+							disx = (j / nd) - (nd / 2);
+							disy = (j % nd) - (nd / 2);
+							if (disx * disx + disy * disy <= (nd / 2) * (nd / 2)) {
+								matfrac[j][k] -= imgdiffsum[j][k];
+							}
+							//matfrac[j][k] -= imgdiffsum[j][k];
+							if (matfrac[j][k] < 0) matfrac[j][k] = 0;
+							//if (matfrac[j][k] < -10000) matfrac[j][k] = -10000;
+							if (matfrac[j][k] > 10000) matfrac[j][k] = 10000;
+							matfracprev[j][k] = matfractmp[j][k];
+						}
+					}
+				}
+
 
 
 				std::cout << "\nIteration:" << itrcount << ", diff:" << diff << std::string(10, ' ');
@@ -186,223 +260,6 @@ namespace Reconstruction {
 		return result;
 	}
 
-	void IterativeMatDec::calc_imgdiff(float** smr, int v_begin) {  
-		
-		//frac: nd*nd X nm matrix,  mat_atn : nm X ne matrix,  source_spectrum : nb X ne (source[j])
-
-		int nm = mat->get_matlist().size();
-		int ne = source_spectrum[0].get_size();
-
-		float w = 1;
-
-		std::vector<std::vector<float>> n = std::vector<std::vector<float>>(nd*nv, std::vector<float>(nb, 0));
-		std::vector<std::vector<float>> nbar = std::vector<std::vector<float>>(nd*nv, std::vector<float>(nb, 0));
-		std::vector<std::vector<float>> lintg = std::vector<std::vector<float>>(nd*nv, std::vector<float>(ne, 0));
-
-		std::vector<float> suma = std::vector<float>(nd*nv, 0);
-		std::vector<float> eta = std::vector<float>(nm, 0.00001);
-		std::vector<float>gamma = std::vector<float>(nm, 0.00001);
-
-		std::vector<std::vector<float>> grad_n = std::vector<std::vector<float>>(nb, std::vector<float>(nm, 0));
-		std::vector<std::vector<float>> grad_q = std::vector<std::vector<float>>(nd * nd, std::vector<float>(nm, 0));
-		std::vector<std::vector<float>> grad_s = std::vector<std::vector<float>>(nd * nd, std::vector<float>(nm, 0));
-
-		std::vector<std::vector<std::vector<float>>> h
-			= std::vector<std::vector<std::vector<float>>>(nd * nd, std::vector<std::vector<float>>(nm, std::vector<float>(nm, 0)));
-		std::vector<std::vector<std::vector<float>>> h_inv
-			= std::vector<std::vector<std::vector<float>>>(nd * nd, std::vector<std::vector<float>>(nm, std::vector<float>(nm, 0)));
-
-
-		std::cout << "\npreparation... " << std::endl;
-		for (int i = 0; i < block_size; i++) {
-			for (int b = 0; b < nb; b++) {
-				for (int e = 0; e < ne; e++) {
-					n[i][b] += source[v_begin + i][b][e];
-				}
-			}
-		}
-
-		float tmpf = 0;
-		for (int i = 0; i < block_size; i++) {
-			std::cout << "\r" << i << "/" << block_size;
-			for (int e = 0; e < ne; e++) {
-				for (int j = 0; j < nd * nd; j++) {
-					for (int k = 0; k < nm; k++) {
-						lintg[i][e] += smr[i][j] * matfrac[j][k] * matatn[k][e];
-					}
-				}
-			}
-		}
-		for (int i = 0; i < block_size; i++) {
-			for (int b = 0; b < nb; b++) {
-				for (int e = 0; e < ne; e++) {
-					nbar[i][b] += source[v_begin + i][b][e] * std::exp(-lintg[i][e]);
-				}
-			}
-		}
-		std::cout << " completed." << std::endl; 
-
-		std::cout << "calc grad n: ";
-		// grad n
-		for (int b = 0; b < nb; b++) {
-			std::cout << "\r" << b << "/" << nb << std::endl;
-			for (int k = 0; k < nm; k++) {
-				for (int i = 0; i < block_size; i++) {
-					for (int e = 0; e < ne; e++) {
-						grad_n[b][k] += source[v_begin + i][b][e] * matatn[k][e] * std::exp(-lintg[i][e]);
-					}
-				}
-			}
-		}
-		std::cout << "completed." << std::endl;
-
-		//grad q
-		std::cout << "calc grad q: ";
-		for (int j = 0; j < nd * nd; j++) {
-			std::cout << "\r" << j << "/" << nd*nd << std::endl;
-			for (int k = 0; k < nm; k++) {
-				for (int i = 0; i < block_size; i++) {
-					for (int b = 0; b < nb; b++) {
-						grad_q[j][k] += -smr[i][j] * (1 - (n[i][b] / nbar[i][b])) * grad_n[b][k];
-					}
-				}
-			}
-		}
-		std::cout << "completed." << std::endl;
-
-		// grad s
-		std::cout << "calc grad s: ";
-		for (int j = 0; j < nd * nd; j++) {
-			std::cout << "\r" << j << "/" << nd * nd << std::endl;
-			std::vector<int> neighbors = calc_neighbor(j, nd);
-			for (int k = 0; k < nm; k++) {
-				for (int l : neighbors) {
-					//std::cout << "j,k,l: " << j << " " << k << " " << l << std::endl;
-					//std::cout << grad_s[j][k] << std::endl; 
-					//std::cout << eta[k] << std::endl;
-					//std::cout << gamma[k] << std::endl;
-					//std::cout << matfrac[j][k] << std::endl;
-					//std::cout << matfracprev[j][k] << std::endl;
-					//std::cout << matfracprev[l][k] << std::endl;
-					grad_s[j][k] += eta[k] * (w / gamma[k]) * std::tanh((2 * matfrac[j][k] - matfracprev[j][k] - matfracprev[l][k]) / gamma[k]);
-				}
-			}
-		}
-		std::cout << "completed." << std::endl;
-
-		//hessian q
-		std::cout << "calc hessian q: ";
-		for (int i = 0; i < block_size; i++) {
-			for (int j = 0; j < nd * nd; j++) {
-				suma[i] += smr[i][j];
-			}
-		}
-
-		for (int j = 0; j < nd * nd; j++) {
-			std::cout << "\r" << j << "/" << nd * nd << std::endl;
-			for (int k = 0; k < nm; k++) {
-				for (int m = 0; m < nm; m++) {
-					for (int i = 0; i < block_size; i++) {
-						for (int b = 0; b < nb; b++) {
-							for (int e = 0; e < ne; e++) {
-								h[j][k][m] += smr[i][j] * (n[i][b] / nbar[i][b]) * suma[i] * source[v_begin + i][b][e] * matatn[k][e] * matatn[m][e] * std::exp(-lintg[i][e]);
-							}
-						}
-					}
-				}
-			}
-		}
-		std::cout << "completed." << std::endl;
-
-		//hessian s
-		std::cout << "calc hessian q: ";
-		for (int j = 0; j < nd * nd; j++) {
-			std::vector<int> neighbors = calc_neighbor(j, nd);
-			for (int k = 0; k < nm; k++) {
-				for (int l : neighbors) {
-					h[j][k][k] += eta[k] * (2 * w / std::sqrt(gamma[k])) * (1 - std::pow(std::tanh((2 * matfrac[j][k] - matfracprev[j][k] - matfracprev[l][k]) / gamma[k]), 2));
-				}
-			}
-		}
-		std::cout << "completed." << std::endl;
-
-		//calc inv of hessian
-		std::cout << "invert hessian: " << std::endl;
-		for (int j = 0; j < nd * nd; j++) {
-			h_inv[j] = gaussian_elim(h[j]);
-		}
-
-		//update material images(by Newton method)
-		std::cout << "update images: " << std::endl;
-		for (int j = 0; j < nd * nd; j++) {
-			for (int k = 0; k < nm; k++) {
-				//imgdiff[j][k] = 0;
-				for (int m = 0; m < nm; m++) {
-					imgdiff[j][k] += (grad_q[j][k] + grad_s[j][k]) * h_inv[j][k][m];
-				}
-			}
-		}
-		std::cout << "completed." << std::endl;
-
-
-
-
-
-		////DenseMatrix frac(matfrac);
-		////DenseMatrix matn(matatn);
-		////DenseMatrix sosp(source);
-
-		//DenseMatrix _sysmat(smr, nd * nd, 0); //horizontal
-
-		//float* d1 = (float*)malloc(nm * sizeof(float));
-		//float** d2 = (float**)malloc(nm * sizeof(float*));
-		//for (int i = 0; i < nm; i++) {
-		//	d2[i] = (float*)malloc(nm * sizeof(float));
-		//}
-
-		//for (int i = 0; i < nm; i++) {
-
-
-		//	for (int j = 0; j < nm; j++) {
-
-		//	}
-		//}
-
-		//
-		//DenseMatrix lintg_nlog = (_sysmat * matfrac * matatn).exp() * -1; //1 X ne mat
-		//DenseMatrix nbar = source[detnum] * DenseMatrix::T(lintg_nlog);
-
-
-		//float** _tmp = (float**)malloc(nm * sizeof(float*));
-		//for (int i = 0; i < nm; i++) {
-		//	_tmp[i] = (float*)malloc(ne * sizeof(float));
-		//	for (int j = 0; j < ne; j++) {
-		//		
-		//		_tmp[i][j] = matatn[i][j] * lintg_nlog[0][j];
-		//	}
-		//}
-		//DenseMatrix grad_n = source[detnum] * DenseMatrix::T(DenseMatrix(_tmp, nm, ne));
-		//DenseMatrix nintg = source[detnum] * DenseMatrix::T(DenseMatrix(nb,1));
-		//DenseMatrix nbarintg = nbar * DenseMatrix::T(DenseMatrix(nb, 1));
-		//for (int i = 0; i < nb; i++) {
-		//	nintg[i][0] /= nbarintg[i][0];
-		//}
-		////
-		//DenseMatrix grad_q = DenseMatrix::T(_sysmat) * DenseMatrix::T(DenseMatrix::T((grad_n - nintg * grad_n) * -1) * DenseMatrix::T(DenseMatrix(nb, 1))); //m X (nd*nd) matrix
-
-		//DenseMatrix hessian_q = 
-
-		
-		
-		
-		/*float sys_sys = Reconstruction::dot_array(smr, smr, size);
-
-		Reconstruction::mul_array1(smr, ((sys_atn - sn) / sys_sys), size);
-		Reconstruction::add_array(idiff, smr, size);
-
-
-		free(_tmp);*/
-	}
 
 	void IterativeMatDec::calc_imgdiff_gpu(float** smr, int v_begin) {
 
@@ -499,17 +356,17 @@ namespace Reconstruction {
 			gamma[i] = 0.01;
 		}
 
-		eta[0] = 0.001; //air
-		eta[1] = 0.001; //al
-		eta[2] = 0.001; //c
-		eta[3] = 0.001; //ti
-		eta[4] = 0.001; //cu
+		//eta[0] = 0.01; //air
+		//eta[1] = 0.001; //al
+		//eta[2] = 1; //c
+		//eta[3] = 1; //ti
+		////eta[4] = 0.001; //cu
 
-		gamma[0] = 0.01;
-		gamma[1] = 0.01;
-		gamma[2] = 0.01;
-		gamma[3] = 0.01;
-		gamma[4] = 0.01;
+		//gamma[0] = 0.001;
+		//gamma[1] = 0.01;
+		//gamma[2] = 0.00001;
+		//gamma[3] = 0.00001;
+		////gamma[4] = 0.01;
 
 		//eta[0] = 0.0001; //air
 		//eta[1] = 0.0001; //al
@@ -522,6 +379,16 @@ namespace Reconstruction {
 		//gamma[2] = 0.1;
 		//gamma[3] = 0.1;
 		//gamma[4] = 0.1;
+
+		eta[0] = 0.001; //air
+		eta[1] = 0.001; //al
+		eta[2] = 0.001; //c
+		eta[3] = 0.01; //ti
+
+		gamma[0] = 0.01;
+		gamma[1] = 0.01;
+		gamma[2] = 0.01;
+		gamma[3] = 0.001;
 
 
 
@@ -552,7 +419,7 @@ namespace Reconstruction {
 		//		for (int j = 0; j < nd * nd; j++) {
 		//			if (smr[i][j] != 0) {
 		//				for (int k = 0; k < nm; k++) {
-		//					lintg[i][e] += smr[i][j] * matfrac[j][k] * matatn[k][e];
+		//					lintg[i][e] += smr[i][j] * matfrac[j][k] * matatn[k][e] * pixsize;
 		//				}
 		//			}
 		//		}
@@ -570,8 +437,15 @@ namespace Reconstruction {
 					std::cout << "lintg: " << lintg[i][e] << " at " << i << "," << e << std::endl;
 				}
 				lintg[i][e] = std::exp(-lintg[i][e]);
-				if (lintg[i][e] < MIN_LINTG) lintg[i][e] = MIN_LINTG;
-				if (lintg[i][e] > MAX_LINTG) lintg[i][e] = MAX_LINTG;
+				if (lintg[i][e] > 0) {
+					if (lintg[i][e] < MIN_LINTG) lintg[i][e] = MIN_LINTG;
+					if (lintg[i][e] > MAX_LINTG) lintg[i][e] = MAX_LINTG;
+				}
+				else {
+					if (lintg[i][e] < -MAX_LINTG) lintg[i][e] = -MAX_LINTG;
+					if (lintg[i][e] > -MIN_LINTG) lintg[i][e] = -MIN_LINTG;
+				}
+
 			}
 		}
 		std::cout << "lintg[100][800] = " << lintg[100][800] << std::endl;
@@ -600,6 +474,15 @@ namespace Reconstruction {
 		//std::cout << "nbar[100][2] = " << nbar[100][2] << std::endl;
 		std::cout << " completed." << std::endl;
 
+		std::cout << "calc suma: ";
+		for (int i = 0; i < block_size; i++) {
+			suma[i] = 0;
+			for (int j = 0; j < nd * nd; j++) {
+				suma[i] += smr[i][j];
+			}
+			suma[i] *= pixsize;
+		}
+
 		std::cout << "calc grad n: ";
 		// grad n
 		for (int b = 0; b < nb; b++) {
@@ -608,7 +491,9 @@ namespace Reconstruction {
 					grad_n[i][b][k] = 0;
 					for (int e = 0; e < ne; e++) {
 						//if(source[v_begin + i][b][e] * matatn[k][e] * lintg[i][e] != 0 && i == 10 && e % 100 == 0)	std::cout << "source, matatn, lintg, all" << source[v_begin + i][b][e] << " " << matatn[k][e] << " " << lintg[i][e] << " " << source[v_begin + i][b][e] * matatn[k][e] * lintg[i][e] << std::endl;
+						
 						grad_n[i][b][k] += source[v_begin + i][b][e] * pixsize * matatn[k][e] * lintg[i][e];
+
 						//std::cout << grad_n[b][k] << std::endl;
 					}
 					//grad_n[i][b][k] /= ne;
@@ -628,7 +513,10 @@ namespace Reconstruction {
 
 		//grad q
 		std::cout << "calc grad q: ";
-		calc_gradq(grad_q, smr, sino->get_sinovec(), nbar, grad_n, nd, block_size, nb, nm, v_begin, pixsize);
+		//calc_gradq(grad_q, smr, sino->get_sinovec(), nbar, grad_n, nd, block_size, nb, nm, v_begin, pixsize);
+		calc_gradq2(grad_q, smr, source, sino->get_sinovec(), nbar, matatn, lintg, suma, nd, block_size, nb, ne, nm, v_begin, pixsize);
+
+		//void calc_gradq2(float** res, float*** source, float* n, float** nbar, float** matatn, float** lintg, float* suma, int nd, int ni, int nb, int ne, int nm, int v_begin, float pixsize);
 
 		for (int j = 0; j < nd * nd; j++) {
 			for (int k = 0; k < nm; k++) {
@@ -642,7 +530,7 @@ namespace Reconstruction {
 		std::cout << "completed." << std::endl;
 
 		// grad s
-		bool sfrag = false;
+		//bool sfrag = false;
 
 		std::cout << "calc grad s: ";
 		for (int j = 0; j < nd * nd; j++) {
@@ -656,10 +544,10 @@ namespace Reconstruction {
 					if (tmp < MIN_TANH) tmp = MIN_TANH;
 					//grad_s[j][k] += eta[k] * (w / gamma[k]) * std::tanh((2 * matfrac[j][k] - matfracprev[j][k] - matfracprev[l][k]) / gamma[k]);
 					grad_s[j][k] += eta[k] * (w / gamma[k]) * tmp;
-					if (!sfrag && std::abs((2 * matfrac[j][k] - matfracprev[j][k] - matfracprev[l][k]) / gamma[k]) < 10) {
-						sfrag = true;
-						//std::cout << "s OK. first:" << j << " " << k << std::endl;
-					}
+					//if (!sfrag && std::abs((2 * matfrac[j][k] - matfracprev[j][k] - matfracprev[l][k]) / gamma[k]) < 10) {
+					//	sfrag = true;
+					//	//std::cout << "s OK. first:" << j << " " << k << std::endl;
+					//}
 				}
 			}
 		}
@@ -675,13 +563,6 @@ namespace Reconstruction {
 
 		//hessian q
 		std::cout << "calc hessian q: ";
-		for (int i = 0; i < block_size; i++) {
-			suma[i] = 0;
-			for (int j = 0; j < nd * nd; j++) {
-				suma[i] += smr[i][j];
-			}
-		}
-
 		calc_hesseq(h, source, smr, sino->get_sinovec(), nbar, matatn, lintg, suma, nd, block_size, nb, ne, nm, v_begin, pixsize);
 
 		for (int j = 0; j < block_size; j++) {
@@ -745,7 +626,7 @@ namespace Reconstruction {
 				}
 			}
 		}*/
-		std::cout << "h[51456][2][2]: " << h[51456][2][2] << std::endl;
+		//std::cout << "h[51456][2][2]: " << h[51456][2][2] << std::endl;
 		//for (int j = 0; j < nd * nd; j++) {
 		//	for (int k = 0; k < nm; k++) {
 		//		if (h[j][k][k] != 0) {
@@ -759,7 +640,7 @@ namespace Reconstruction {
 
 
 		//hessian s
-		sfrag = false;
+		//sfrag = false;
 		std::cout << "calc hessian s: ";
 		for (int j = 0; j < nd * nd; j++) {
 			std::vector<int> neighbors = calc_neighbor(j, nd);
@@ -774,10 +655,10 @@ namespace Reconstruction {
 					//h[j][k][k] += eta[k] * (2 * w / std::sqrt(gamma[k])) * (1 - std::pow(std::tanh((2 * matfrac[j][k] - matfracprev[j][k] - matfracprev[l][k]) / gamma[k]), 2));
 					h[j][k][k] += eta[k] * (2 * w / std::sqrt(gamma[k])) * (1 - std::pow(tmp, 2));
 					//hs[j][k][k] += eta[k] * (2 * w / std::sqrt(gamma[k])) * (1 - std::pow(tmp, 2));
-					if (!sfrag && std::abs((2 * matfrac[j][k] - matfracprev[j][k] - matfracprev[l][k]) / gamma[k]) < 10) {
-						sfrag = true;
-						std::cout << "s OK. first:" << j << " " << k << std::endl;
-					}
+					//if (!sfrag && std::abs((2 * matfrac[j][k] - matfracprev[j][k] - matfracprev[l][k]) / gamma[k]) < 10) {
+					//	sfrag = true;
+					//	std::cout << "s OK. first:" << j << " " << k << std::endl;
+					//}
 				}
 			}
 		}
@@ -855,11 +736,13 @@ namespace Reconstruction {
 			for (int k = 0; k < nm; k++) {
 				//imgdiff[j][k] = 0;
 				for (int m = 0; m < nm; m++) {
-					imgdiff[j][k] += (grad_q[j][k] + grad_s[j][k]) * h_inv[j][k][m];
+					//imgdiff[j][k] += (grad_q[j][k] + grad_s[j][k]) * h_inv[j][k][m];
+					imgdiff[j][k] += (grad_q[j][m] + grad_s[j][m]) * h_inv[j][k][m];
 					////imgdiff[j][k] += grad_q[j][k] * h_inv[j][k][m] + grad_s[j][k] * hs_inv[j][k][m];
 					//imgdiff[j][k] += grad_s[j][k] * hs_inv[j][k][m];
 					////if((grad_q[j][k] + grad_s[j][k]) != 0) 
-					if(j < 10) std::cout << "j,k,m, imgdiff, grad, hinv:" << j << ", " << k << ", " << m << ", " << imgdiff[j][k] << ", " << grad_q[j][k] + grad_s[j][k] << ", " << h_inv[j][k][m] << std::endl;
+					//if(imgdiff[j][k] < -100000000) 
+					if(j < 10) std::cout << "j,k,m, imgdiff, grad, hinv:" << j << ", " << k << ", " << m << ", " << imgdiff[j][k] << ", " << grad_q[j][m] + grad_s[j][m] << ", " << h_inv[j][k][m] << std::endl;
 				}
 			}
 		}
@@ -921,6 +804,8 @@ namespace Reconstruction {
 		free(hs_inv);
 
 	}
+
+
 
 	int IterativeMatDec::gaussian_elim(float** input, float** result, int size, bool log) {
 

@@ -43,7 +43,7 @@ namespace Reconstruction {
 
 		std::unique_ptr<SparseMatrix> sysmat;
 		//DenseMatrix matfrac, matfracprev, imgdiff, matatn, * source;
-		float **matfrac, **matfracprev, **matfractmp, **imgdiff, **matatn, ***source;
+		float **matfrac, **matfracprev, **matfractmp, **imgdiff, **imgdiffsum, **matatn, ***source;
 
 
 		//float relpar;// = 1.05;
@@ -98,6 +98,7 @@ namespace Reconstruction {
 			matfracprev = (float**)malloc(nd * nd * sizeof(float*));
 			matfractmp = (float**)malloc(nd * nd * sizeof(float*));
 			imgdiff = (float**)malloc(nd * nd * sizeof(float*));
+			imgdiffsum = (float**)malloc(nd * nd * sizeof(float*));
 			matatn = (float**)malloc(nm * sizeof(float*));
 			source = (float***)malloc(nd * nv * sizeof(float**)); // ndxnv X nb X ne matrix
 
@@ -127,11 +128,16 @@ namespace Reconstruction {
 				matfracprev[i] = (float*)malloc(nm * sizeof(float));
 				matfractmp[i] = (float*)malloc(nm * sizeof(float));
 				imgdiff[i] = (float*)malloc(nm * sizeof(float));
+				imgdiffsum[i] = (float*)malloc(nm * sizeof(float));
 				for (int j = 0; j < nm; j++) {
-					matfrac[i][j] = 1;// 1 / nm;
-					matfracprev[i][j] = 1;// 1 / nm;
-					matfractmp[i][j] = 1;// 1 / nm;
+					matfrac[i][j] = 0.1;// 1 / nm;
+					matfracprev[i][j] = 0.1;// 1 / nm;
+					matfractmp[i][j] = 0.1;// 1 / nm;
+					//matfrac[i][j] = 0;// 1 / nm;
+					//matfracprev[i][j] = 0;// 1 / nm;
+					//matfractmp[i][j] = 0;// 1 / nm;
 					imgdiff[i][j] = 0;
+					imgdiffsum[i][j] = 0;
 				}
 			}
 
@@ -162,7 +168,7 @@ namespace Reconstruction {
 
 		std::vector<int>& calc_neighbor(int j, int size);
 		virtual void calc_imgdiff_gpu(float** smr, int v_begin);
-		virtual void calc_imgdiff(float** smr, int v_begin);
+		//virtual void calc_imgdiff(float** smr, int v_begin);
 		//virtual void calc_attenu(float** atn, float** idiff, int size) const = 0;
 
 		//float** gaussian_elim(float** input, int size, bool log = false);
@@ -177,4 +183,3 @@ namespace Reconstruction {
 
 	};
 }
-
